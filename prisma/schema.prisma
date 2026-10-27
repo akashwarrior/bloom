@@ -1,0 +1,225 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  projects      Project[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+enum ChatMessageRole {
+  USER
+  ASSISTANT
+}
+
+enum AssetSource {
+  UPLOAD
+  GENERATED
+}
+
+enum AssetStatus {
+  PENDING
+  READY
+  FAILED
+  DELETING
+}
+
+enum ProjectFramework {
+  NEXTJS
+}
+
+enum RevisionAuthorType {
+  SYSTEM
+  AGENT
+  USER
+  RESTORE
+}
+
+model Project {
+  id                String           @id @default(cuid())
+  userId            String
+  title             String
+  framework         ProjectFramework @default(NEXTJS)
+  currentRevisionId String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  user              User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages          ChatMessage[]
+  contextCheckpoint ProjectContextCheckpoint?
+  assets            Asset[]
+  fileBlobs         ProjectFileBlob[]
+  revisions         ProjectRevision[]
+
+  @@index([userId, updatedAt])
+}
+
+model Asset {
+  id        String      @id @default(uuid())
+  projectId String
+  objectKey String      @unique
+  filename  String
+  mediaType String
+  size      Int
+  source    AssetSource @default(UPLOAD)
+  status    AssetStatus @default(PENDING)
+  claimedAt DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([status, createdAt])
+}
+
+model ChatMessage {
+  id           String          @id @default(cuid())
+  projectId    String
+  role         ChatMessageRole
+  /// Ordered, extensible UI message parts. Their variants are intentionally
+  /// validated in application code rather than fixed in the database schema.
+  parts        Json
+  metadata     Json?
+  revisionId   String?
+  supersededAt DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  project           Project                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  revision          ProjectRevision?          @relation(fields: [revisionId], references: [id], onDelete: SetNull)
+  contextCheckpoint ProjectContextCheckpoint?
+
+  @@index([projectId, createdAt, id])
+  @@index([revisionId])
+}
+
+model ProjectContextCheckpoint {
+  projectId            String   @id
+  throughMessageId     String   @unique
+  /// Evidence-heavy compacted prefix plus any exact model-message tail created
+  /// after compaction within the same agent run.
+  checkpointMessages   Json
+  retainedAssetIds     String[] @default([])
+  checkpointTokenCount Int
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  project        Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  throughMessage ChatMessage @relation(fields: [throughMessageId], references: [id], onDelete: Cascade)
+
+  @@index([updatedAt])
+}
+
+model ProjectFileBlob {
+  id        String   @id @default(cuid())
+  projectId String
+  sha256    String
+  objectKey String   @unique
+  size      Int
+  mediaType String   @default("text/plain")
+  createdAt DateTime @default(now())
+
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  revisionFiles RevisionFile[]
+
+  @@unique([projectId, sha256])
+  @@index([projectId])
+}
+
+model ProjectRevision {
+  id               String             @id @default(cuid())
+  projectId        String
+  parentRevisionId String?
+  authorType       RevisionAuthorType
+  summary          String
+  createdAt        DateTime           @default(now())
+
+  project        Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parentRevision ProjectRevision?  @relation("RevisionParent", fields: [parentRevisionId], references: [id], onDelete: SetNull)
+  childRevisions ProjectRevision[] @relation("RevisionParent")
+  files          RevisionFile[]
+  messages       ChatMessage[]
+
+  @@index([projectId, createdAt])
+  @@index([parentRevisionId])
+}
+
+model RevisionFile {
+  revisionId String
+  path       String
+  blobId     String
+
+  revision ProjectRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  blob     ProjectFileBlob @relation(fields: [blobId], references: [id], onDelete: Restrict)
+
+  @@id([revisionId, path])
+  @@index([blobId])
+}
