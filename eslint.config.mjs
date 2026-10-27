@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Source written into generated projects; linted and compiled there.
+    "templates/**",
   ]),
 ]);
 
