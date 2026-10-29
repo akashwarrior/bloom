@@ -11,12 +11,17 @@
     "test": "node --test tests/*.test.ts"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.112",
+    "@ai-sdk/google-vertex": "^5.0.132",
+    "@ai-sdk/openai": "^4.0.109",
+    "@ai-sdk/react": "^4.0.167",
     "@aws-sdk/client-s3": "^3.1163.0",
     "@aws-sdk/s3-request-presigner": "^3.1163.0",
     "@base-ui/react": "^1.9.0",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "@tanstack/react-query": "^5.106.1",
+    "ai": "^7.0.163",
     "better-auth": "^1.7.18",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
