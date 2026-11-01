@@ -53,6 +53,7 @@
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.0",
     "prisma": "^7.10.1",
+    "raw-loader": "^4.0.2",
     "tailwindcss": "^4.3.4",
     "typescript": "6.0.2"
   }
