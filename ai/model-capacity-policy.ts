@@ -24,3 +24,21 @@ export function isModelCapacityError(error: unknown, depth = 0): boolean {
     ? isModelCapacityError(record.cause, depth + 1)
     : false;
 }
+
+const CAPACITY_RETRY_BASE_MS = [4_000, 10_000, 18_000] as const;
+
+/**
+ * Jittered, increasing cooldown for image-provider 429s. The longer wait keeps
+ * parallel retries from stampeding the same exhausted quota.
+ */
+export function capacityRetryDelayMs(
+  attempt: number,
+  random: () => number = Math.random,
+) {
+  const index = Math.min(
+    CAPACITY_RETRY_BASE_MS.length - 1,
+    Math.max(0, Math.floor(attempt)),
+  );
+  const base = CAPACITY_RETRY_BASE_MS[index]!;
+  return base + Math.floor(Math.max(0, Math.min(1, random())) * base * 0.4);
+}

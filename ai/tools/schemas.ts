@@ -20,7 +20,25 @@ export const toolErrorSchema = z.strictObject({
   recovery: z.string().min(1).max(500).optional(),
 });
 
-export const toolFailureSchema = z.strictObject({
+export const typeScriptValidationStatusSchema = z.enum([
+  "skipped",
+  "passed",
+  "failed",
+  "timed-out",
+  "unavailable",
+]);
+
+export const typeScriptValidationSchema = z.strictObject({
+  status: typeScriptValidationStatusSchema,
+  exitCode: z.number().int().nullable(),
+  durationMs: z.number().int().nonnegative(),
+  timedOut: z.boolean(),
+  outputTruncated: z.boolean(),
+});
+
+export const tscErrorSchema = z.string().max(6_000).nullable();
+
+const toolFailureSchema = z.strictObject({
   status: z.literal("error"),
   error: toolErrorSchema,
 });
