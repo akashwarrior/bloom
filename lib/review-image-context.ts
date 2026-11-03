@@ -78,7 +78,7 @@ function imageIdentity(part: Record<string, unknown>) {
 
 export function isVisualReviewImageFilename(filename: unknown) {
   return typeof filename === "string" &&
-    /(?:clone-reference|inspiration-reference|public-reference|current-preview)/i.test(filename);
+    /(?:public-reference|current-preview)/i.test(filename);
 }
 
 export function countMessageImageParts(messages: ModelMessage[]): number {

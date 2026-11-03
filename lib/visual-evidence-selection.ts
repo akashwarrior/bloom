@@ -1,7 +1,7 @@
 import { evenlySelectItems } from "./evenly-select-items.ts";
 
 function isReference(filename: string) {
-  return /(?:clone|inspiration|public)-reference/i.test(filename);
+  return /public-reference/i.test(filename);
 }
 
 function isPreview(filename: string) {
@@ -24,7 +24,7 @@ export function selectBalancedVisualEvidence<
     return evenlySelectItems(items, limit);
   }
 
-  // Anchor-first: public/clone refs carry the design thesis. When only one
+  // Anchor-first: public refs carry the design thesis. When only one
   // side exists (e.g. refs before the first preview scrape), keep that side
   // first instead of evenly sampling across unrelated generated assets.
   if (references.length > 0 && previews.length === 0) {

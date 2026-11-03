@@ -104,42 +104,6 @@ export async function storeGeneratedImageAsset({
   };
 }
 
-export async function readProjectImageAsset({
-  projectId,
-  assetId,
-}: {
-  projectId: string;
-  assetId: string;
-}) {
-  const asset = await prisma.asset.findFirst({
-    where: {
-      id: assetId,
-      projectId,
-      status: AssetStatus.READY,
-    },
-    select: {
-      id: true,
-      objectKey: true,
-      filename: true,
-      mediaType: true,
-      size: true,
-    },
-  });
-
-  if (!asset || !isProjectGeneratedImageMediaType(asset.mediaType)) {
-    throw new Error("Reference image is unavailable");
-  }
-  if (asset.size <= 0 || asset.size > MAX_CHAT_ATTACHMENT_SIZE) {
-    throw new Error("Reference image exceeds the supported asset size");
-  }
-
-  return {
-    ...asset,
-    mediaType: asset.mediaType,
-    bytes: await getAssetObjectBytes(asset.objectKey),
-  };
-}
-
 export async function findGeneratedProjectAsset({
   projectId,
   cacheKey,
