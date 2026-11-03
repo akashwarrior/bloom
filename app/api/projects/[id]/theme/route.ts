@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { applyManualTheme, getProjectTheme, LegacyDesignError } from "@/lib/design/manual-theme.server";
+import { applyManualTheme, getProjectTheme } from "@/lib/design/manual-theme.server";
 import { shadcnThemeSchema } from "@/lib/design/shadcn-theme";
 import prisma from "@/lib/prisma";
 
@@ -37,7 +37,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     return Response.json(await applyManualTheme(project.id, parsed.data, request.signal));
   } catch (error) {
-    if (error instanceof LegacyDesignError) return Response.json({ error: error.message }, { status: 409 });
     console.error("Failed to apply theme", error);
     return Response.json(
       { error: error instanceof Error ? error.message : "Failed to apply theme" },

@@ -6,51 +6,39 @@ import {
   PRESET_FONT_HEADINGS,
   PRESET_FONTS,
   PRESET_ICON_LIBRARIES,
+  PRESET_MENU_ACCENTS,
+  PRESET_MENU_COLORS,
   PRESET_RADII,
   PRESET_STYLES,
   PRESET_THEMES,
 } from "shadcn/preset";
 
-import type { DesignBrief, ThemedBrief } from "./brief.ts";
-import { contrastRatio, isLightColor, parseColor, parseOklch, toHex } from "./color.ts";
+import { parseOklch, toHex } from "./color.ts";
+import { CHART_COLOR_PAIRINGS, ICON_OPTIONS, STYLE_OPTIONS } from "./theme-options.ts";
+
+const STYLE_DESCRIPTION = PRESET_STYLES.map(
+  (style) => `${style}: ${STYLE_OPTIONS[style].description}`,
+).join("; ");
 
 /**
  * The inputs of shadcn create (ui.shadcn.com/create): Bloom resolves them
  * through shadcn's own init endpoint and applies them with `shadcn apply`.
  */
 export const shadcnThemeSchema = z.strictObject({
-  style: z.enum(PRESET_STYLES).describe("vega: clean, neutral, familiar. nova: reduced padding and margins. maia: rounded, generous spacing. lyra: boxy and sharp, for mono fonts. mira: compact interfaces. luma: fluid, luminous, soft. sera: editorial and typographic. rhea: like luma but compact."),
+  style: z.enum(PRESET_STYLES).describe(`Component geometry. ${STYLE_DESCRIPTION}.`),
   baseColor: z.enum(PRESET_BASE_COLORS).describe("Neutral family for backgrounds, borders and muted text."),
   theme: z.enum(PRESET_THEMES).describe("Primary color: buttons, focus rings, key highlights. A neutral name (neutral, stone, zinc, gray, mauve, olive, mist, taupe) is allowed only when it equals baseColor."),
-  chartColor: z.enum(PRESET_CHART_COLORS).describe("Palette of chart-1..5, also the art and accent hues. A neutral name is allowed only when it equals baseColor."),
+  chartColor: z.enum(PRESET_CHART_COLORS).describe("Palette of chart-1..5, used for charts and chart-role panels. A neutral name is allowed only when it equals baseColor."),
   font: z.enum(PRESET_FONTS).describe("Body font."),
   fontHeading: z.enum(PRESET_FONT_HEADINGS).describe("Heading font; inherit uses the body font."),
   iconLibrary: z.enum(PRESET_ICON_LIBRARIES),
   radius: z.enum(PRESET_RADII),
   mode: z.enum(["light", "dark"]).describe("Which side of the theme the page uses."),
+  menuAccent: z.enum(PRESET_MENU_ACCENTS).default("subtle").describe("Menu focus treatment: subtle uses the muted surface, bold uses the primary color."),
+  menuColor: z.enum(PRESET_MENU_COLORS).default("default").describe("Menu surface: default follows the page popover, inverted forces the dark popover, and the translucent variants add a backdrop blur."),
 });
 
 export type ShadcnTheme = z.infer<typeof shadcnThemeSchema>;
-
-const CHART_PAIRINGS: Record<string, string[]> = {
-  red: ["teal", "sky"],
-  orange: ["teal", "blue"],
-  amber: ["cyan", "indigo"],
-  yellow: ["sky", "violet"],
-  lime: ["indigo", "pink"],
-  green: ["purple", "rose"],
-  emerald: ["purple", "red"],
-  teal: ["fuchsia", "red"],
-  cyan: ["rose", "amber"],
-  sky: ["red", "yellow"],
-  blue: ["orange", "yellow"],
-  indigo: ["amber", "yellow"],
-  violet: ["yellow", "lime"],
-  purple: ["green", "lime"],
-  fuchsia: ["lime", "teal"],
-  pink: ["green", "cyan"],
-  rose: ["emerald", "sky"],
-};
 
 const pick = <T>(items: readonly T[], random: () => number) => items[Math.floor(random() * items.length)]!;
 
@@ -80,6 +68,10 @@ export function compatibleShadcnTheme(theme: ShadcnTheme) {
     notes.push(`Chart color "${theme.chartColor}" is not available on base color "${theme.baseColor}"; Bloom used "${theme.baseColor}".`);
     next = { ...next, chartColor: theme.baseColor };
   }
+  if (theme.style === "rhea" && theme.radius === "large") {
+    notes.push("Rhea does not support the large radius; Bloom used medium.");
+    next = { ...next, radius: "medium" };
+  }
   return { theme: next, notes };
 }
 
@@ -90,7 +82,7 @@ export function randomShadcnTheme(random: () => number = Math.random): ShadcnThe
   const theme = pick(themesForBaseColor(baseColor), random);
   const font = style === "lyra" ? "jetbrains-mono" : pick(PRESET_FONTS, random);
   const radii = style === "lyra" ? ["none"] as const : PRESET_RADII.filter((radius) => style !== "rhea" || radius !== "large");
-  const pairing = CHART_PAIRINGS[theme];
+  const pairing = CHART_COLOR_PAIRINGS[theme];
   return {
     style,
     baseColor,
@@ -101,6 +93,8 @@ export function randomShadcnTheme(random: () => number = Math.random): ShadcnThe
     iconLibrary: pick(PRESET_ICON_LIBRARIES, random),
     radius: pick(radii, random),
     mode: "light",
+    menuAccent: pick(PRESET_MENU_ACCENTS, random),
+    menuColor: pick(PRESET_MENU_COLORS, random),
   };
 }
 
@@ -114,51 +108,58 @@ export function shadcnPresetCode(theme: ShadcnTheme) {
     fontHeading: theme.fontHeading,
     iconLibrary: theme.iconLibrary,
     radius: theme.radius,
-    menuAccent: "subtle",
-    menuColor: "default",
+    menuAccent: theme.menuAccent,
+    menuColor: theme.menuColor,
   });
-}
-
-const FONT_FAMILIES: Record<string, string> = {
-  "noto-sans": "Noto Sans",
-  "nunito-sans": "Nunito Sans",
-  "dm-sans": "DM Sans",
-  "public-sans": "Public Sans",
-  "jetbrains-mono": "JetBrains Mono",
-  "geist-mono": "Geist Mono",
-  "playfair-display": "Playfair Display",
-  "noto-serif": "Noto Serif",
-  "roboto-slab": "Roboto Slab",
-  "space-grotesk": "Space Grotesk",
-  "ibm-plex-sans": "IBM Plex Sans",
-  "source-sans-3": "Source Sans 3",
-  "instrument-sans": "Instrument Sans",
-  "eb-garamond": "EB Garamond",
-  "instrument-serif": "Instrument Serif",
-};
-
-export function shadcnFontFamily(id: string) {
-  return FONT_FAMILIES[id] ?? id.charAt(0).toUpperCase() + id.slice(1);
 }
 
 const RADIUS_PX: Record<string, number> = { none: 0, small: 7, medium: 10, large: 14, default: 10 };
 
-export type ResolvedShadcnTheme = {
-  code: string;
-  /** Hex values of the chosen mode, keyed like shadcn's CSS variables. */
-  vars: Record<string, string>;
-  radiusPx: number;
-  chart: string[];
-  iconImport: string;
+/** The resolved tokens of an applied preset, stored so they survive a reload. */
+export const resolvedShadcnThemeSchema = z.strictObject({
+  code: z.string(),
+  /** CSS color values of the chosen mode, keyed like shadcn's CSS variables. */
+  vars: z.record(z.string(), z.string()),
+  /** CSS color values of shadcn's dark side; the dark block also powers inverted menus. */
+  darkVars: z.record(z.string(), z.string()),
+  radiusPx: z.number().int().nonnegative(),
+  chart: z.array(z.string()).length(5),
+  /** Package installed by shadcn apply for the chosen icon library. */
+  iconPackage: z.string(),
+});
+
+export type ResolvedShadcnTheme = z.infer<typeof resolvedShadcnThemeSchema>;
+
+/** The normalized inputs and resolved tokens of an applied or previewed preset. */
+export type ResolvedPreset = {
+  input: ShadcnTheme;
+  resolved: ResolvedShadcnTheme;
 };
 
-const ICON_IMPORTS: Record<string, string> = {
-  lucide: 'import { ArrowRight } from "lucide-react"',
-  tabler: 'import { IconArrowRight } from "@tabler/icons-react"',
-  phosphor: 'import { ArrowRightIcon } from "@phosphor-icons/react"',
-  remixicon: 'import { RiArrowRightLine } from "@remixicon/react"',
-  hugeicons: 'import { HugeiconsIcon } from "@hugeicons/react"; import { ArrowRight01Icon } from "@hugeicons/core-free-icons"; <HugeiconsIcon icon={ArrowRight01Icon} />',
-};
+/** Converts shadcn's oklch values to a CSS color, preserving alpha in translucent tokens. */
+function cssColor(value: string) {
+  const color = parseOklch(value);
+  if (!color) return null;
+  const alpha = /\/\s*(\d*\.?\d+)(%?)\s*\)$/.exec(value);
+  if (alpha) {
+    const percent = alpha[2] === "%" ? Number.parseFloat(alpha[1]!) : Number.parseFloat(alpha[1]!) * 100;
+    if (percent < 100) {
+      return `rgb(${color.r} ${color.g} ${color.b} / ${Math.round(percent * 100) / 100}%)`;
+    }
+  }
+  return toHex(color);
+}
+
+function cssVars(values: Record<string, string> | undefined) {
+  return Object.fromEntries(
+    Object.entries(values ?? {}).flatMap(([key, value]) => {
+      const color = cssColor(value);
+      return color ? [[key, color]] : [];
+    }),
+  );
+}
+
+const REQUIRED_VARS = ["background", "foreground", "primary", "primary-foreground", "muted", "muted-foreground", "border", "accent", "accent-foreground", "chart-1", "chart-3"] as const;
 
 /** Resolves a preset through shadcn's init endpoint, the same source `shadcn apply` reads. */
 export async function resolveShadcnTheme(theme: ShadcnTheme, signal?: AbortSignal): Promise<ResolvedShadcnTheme> {
@@ -172,8 +173,8 @@ export async function resolveShadcnTheme(theme: ShadcnTheme, signal?: AbortSigna
     font: theme.font,
     fontHeading: theme.fontHeading,
     rtl: "false",
-    menuAccent: "subtle",
-    menuColor: "default",
+    menuAccent: theme.menuAccent,
+    menuColor: theme.menuColor,
     radius: theme.radius,
   });
   const response = await fetch(`https://ui.shadcn.com/init?${params}`, { signal });
@@ -182,81 +183,30 @@ export async function resolveShadcnTheme(theme: ShadcnTheme, signal?: AbortSigna
     throw new Error(`shadcn init returned ${response.status}${detail ? `: ${detail}` : ""}`);
   }
   const item = await response.json() as { cssVars?: { light?: Record<string, string>; dark?: Record<string, string> } };
-  const raw = { ...item.cssVars?.light, ...(theme.mode === "dark" ? item.cssVars?.dark : {}) };
-  const vars = Object.fromEntries(
-    Object.entries(raw).flatMap(([key, value]) => {
-      const color = parseOklch(value);
-      return color ? [[key, toHex(color)]] : [];
-    }),
-  );
-  for (const key of ["background", "foreground", "primary", "primary-foreground", "muted", "muted-foreground", "border", "chart-1", "chart-3"]) {
+  const lightVars = cssVars(item.cssVars?.light);
+  const darkVars = cssVars(item.cssVars?.dark);
+  const vars = theme.mode === "dark" ? { ...lightVars, ...darkVars } : lightVars;
+  for (const key of REQUIRED_VARS) {
     if (!vars[key]) throw new Error(`shadcn init returned no ${key} color`);
   }
-  const radius = raw.radius?.endsWith("rem") ? Math.round(Number.parseFloat(raw.radius) * 16) : RADIUS_PX[theme.radius]!;
+  if (Object.keys(darkVars).length === 0) throw new Error("shadcn init returned no dark colors");
+  const rawRadius = item.cssVars?.light?.radius ?? item.cssVars?.dark?.radius;
+  const radiusPx = rawRadius?.endsWith("rem")
+    ? Math.round(Number.parseFloat(rawRadius) * 16)
+    : RADIUS_PX[theme.radius]!;
   return {
     code: shadcnPresetCode(theme),
     vars,
-    radiusPx: theme.radius === "none" ? 0 : radius,
+    darkVars,
+    radiusPx: theme.radius === "none" ? 0 : radiusPx,
     chart: [1, 2, 3, 4, 5].map((index) => vars[`chart-${index}`] ?? vars["chart-3"]!),
-    iconImport: ICON_IMPORTS[theme.iconLibrary]!,
+    iconPackage: ICON_OPTIONS[theme.iconLibrary].package,
   };
 }
 
-function readableOn(background: string, candidates: string[]) {
-  const bg = parseColor(background)!;
-  return candidates.reduce((best, candidate) =>
-    contrastRatio(parseColor(candidate)!, bg) > contrastRatio(parseColor(best)!, bg) ? candidate : best);
+/** Normalizes a preset and resolves it, returning the notes for anything changed. */
+export async function prepareShadcnTheme(input: ShadcnTheme, signal?: AbortSignal) {
+  const { theme, notes } = compatibleShadcnTheme(input);
+  return { theme, resolved: await resolveShadcnTheme(theme, signal), notes };
 }
 
-const MONO_FONTS = new Set(["jetbrains-mono", "geist-mono"]);
-
-/** Expands a themed brief into the full brief: colors, fonts and shape come from the resolved shadcn theme. */
-export function briefFromTheme(input: ThemedBrief, resolved: ResolvedShadcnTheme): DesignBrief {
-  const { shadcn, surfaces, typography, ...rest } = input;
-  const vars = resolved.vars;
-  const accent = resolved.chart[2]!;
-  const onAccent = readableOn(accent, ["#FFFFFF", "#111111", vars.foreground!, vars.background!]);
-  const surfaceColors = {
-    background: [vars.background!, vars.foreground!],
-    muted: [vars.muted!, vars.foreground!],
-    primary: [vars.primary!, vars["primary-foreground"]!],
-    inverse: [vars.foreground!, vars.background!],
-    chart: [accent, onAccent],
-  } satisfies Record<ThemedBrief["surfaces"][number]["role"], string[]>;
-  const resolvedSurfaces = surfaces.map((surface) => ({
-    name: surface.name,
-    background: surfaceColors[surface.role][0]!,
-    foreground: surfaceColors[surface.role][1]!,
-  }));
-  const tones = new Set(resolvedSurfaces.map((surface) => isLightColor(parseColor(surface.background)!)));
-  const heading = shadcn.fontHeading === "inherit" ? shadcn.font : shadcn.fontHeading;
-  const mono = [shadcn.font, heading].find((font) => MONO_FONTS.has(font));
-  return {
-    ...rest,
-    theme: tones.size > 1 ? "mixed" : shadcn.mode,
-    colors: {
-      background: vars.background!,
-      foreground: vars.foreground!,
-      primary: vars.primary!,
-      primaryForeground: vars["primary-foreground"]!,
-      accent,
-      accentForeground: onAccent,
-      muted: vars.muted!,
-      mutedForeground: vars["muted-foreground"]!,
-      border: vars.border!,
-      surfaces: resolvedSurfaces,
-    },
-    typography: {
-      display: { family: shadcnFontFamily(heading), ...typography.display },
-      heading: typography.heading,
-      body: { family: shadcnFontFamily(shadcn.font), ...typography.body },
-      mono: mono ? { family: shadcnFontFamily(mono) } : null,
-    },
-    shape: {
-      cardRadiusPx: Math.min(resolved.radiusPx * 2, 32),
-      buttonShape: resolved.radiusPx === 0 ? "square" : "rounded",
-      shadows: "subtle",
-      borders: true,
-    },
-  };
-}
