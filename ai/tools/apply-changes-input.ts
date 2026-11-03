@@ -6,20 +6,18 @@ const createFile = z.strictObject({
   type: z.literal("create").describe("Create a new file or completely rewrite an existing one."),
   path: projectPathSchema,
   content: z.string().describe(
-    "Complete file content. Tool strings are already JSON-decoded: use normal source quotes and real newlines, never escaped JSON or line-number prefixes.",
+    "Complete file content.",
   ),
 });
 
-const updateFile = z.strictObject({
-  type: z.literal("update").describe("Replace an inclusive 1-based line range of an existing file."),
+const replaceFile = z.strictObject({
+  type: z.literal("replace").describe("Replace exact text in an existing file."),
   path: projectPathSchema,
-  startLine: z.number().int().describe("First line to replace (1-based, as shown by readFiles)."),
-  endLine: z
-    .number()
-    .int()
-    .describe("Last line to replace, inclusive. Use startLine - 1 to insert before startLine."),
-  content: z.string().describe(
-    "Replacement lines without line-number prefixes; an empty string deletes the range. Tool strings are already JSON-decoded: use normal source quotes and real newlines.",
+  oldString: z.string().min(1).describe(
+    "Exact text to find, including indentation and excluding readFiles line-number prefixes. It must appear exactly once in the current file.",
+  ),
+  newString: z.string().describe(
+    "Text that replaces oldString; an empty string deletes it. No line-number prefixes.",
   ),
 });
 
@@ -30,29 +28,29 @@ const deleteFile = z.strictObject({
 
 export const applyChangesInputSchema = z.strictObject({
   changes: z
-    .array(z.discriminatedUnion("type", [createFile, updateFile, deleteFile]))
+    .array(z.discriminatedUnion("type", [createFile, replaceFile, deleteFile]))
     .min(1)
     .max(40)
-    .describe(
-      "Atomic batch. Entries may mix types; every entry is applied or none are. Several updates to one path are allowed when their ranges do not overlap, and all line numbers refer to the file as it was before this call.",
-    ),
+    .describe("Array of files to create, exact text to replace, or files to delete."),
 });
 
-export type ApplyChange = z.infer<typeof applyChangesInputSchema>["changes"][number];
+type ApplyChange = z.infer<typeof applyChangesInputSchema>["changes"][number];
 
-type LineEdit = { startLine: number; endLine: number; content: string };
+type TextEdit = { oldString: string; newString: string };
 
-/** Groups a flat batch into the runtime's per-path operations, preserving the create/edit/delete order. */
 export function groupApplyChanges(changes: ApplyChange[]) {
   const creates: Array<{ path: string; content: string }> = [];
-  const editsByPath = new Map<string, LineEdit[]>();
+  const editsByPath = new Map<string, TextEdit[]>();
   const deletes: string[] = [];
   for (const change of changes) {
     if (change.type === "create") {
       creates.push({ path: change.path, content: change.content });
-    } else if (change.type === "update") {
+    } else if (change.type === "replace") {
       const edits = editsByPath.get(change.path) ?? [];
-      edits.push({ startLine: change.startLine, endLine: change.endLine, content: change.content });
+      edits.push({
+        oldString: change.oldString,
+        newString: change.newString,
+      });
       editsByPath.set(change.path, edits);
     } else {
       deletes.push(change.path);

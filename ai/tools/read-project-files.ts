@@ -50,7 +50,7 @@ const outputSchema = z.strictObject({
 export const readProjectFiles = ({ projectId, signal }: Pick<ToolParams, "projectId" | "signal">) =>
   tool({
     description:
-      "Read current project text files from the runtime. Each returned line is prefixed with its 1-based line number and a tab (\"12\\t...\"); use those numbers for `update` entries in applyChanges, and never copy the prefixes into file content. Supports bounded line ranges. Read related small files together, use ranges for large files, and continue from nextStartLine whenever truncated.",
+      "Read current project text files from the runtime. Each returned line is prefixed with its 1-based line number and a tab (\"12\\t...\"). Use those numbers to locate text; copy the exact text without prefixes into `oldString` in applyChanges. Supports bounded line ranges. Read related small files together, use ranges for large files, and continue from nextStartLine whenever truncated.",
     inputSchema: z.strictObject({
       files: z
         .array(fileReadSchema)

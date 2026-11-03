@@ -32,6 +32,15 @@ type ToolRuntimeCommand = RuntimeCommandInput & {
   purpose: string;
 };
 
+function shellData(input: ToolRuntimeCommand, toolCallId: string) {
+  return {
+    commandId: toolCallId,
+    command: input.executable,
+    args: input.args,
+    purpose: input.purpose,
+  };
+}
+
 export function reportCommandFailure(
   context: Pick<ToolParams, "writer">,
   input: ToolRuntimeCommand,
@@ -41,18 +50,12 @@ export function reportCommandFailure(
   recovery: string,
 ) {
   const message = error instanceof Error ? error.message : String(error);
-  const shellData = {
-    commandId: toolCallId,
-    command: input.executable,
-    args: input.args,
-    purpose: input.purpose,
-  };
 
   context.writer.write({
     id: toolCallId,
     type: "data-shell",
     data: {
-      ...shellData,
+      ...shellData(input, toolCallId),
       status: STATUS.ERROR,
       error: { message },
     },
@@ -91,17 +94,11 @@ export async function executeRuntimeCommand(
 ) {
   const { projectId, signal, writer } = context;
   const cwd = input.cwd === "." ? "." : normalizeProjectPath(input.cwd);
-  const shellData = {
-    commandId: toolCallId,
-    command: input.executable,
-    args: input.args,
-    purpose: input.purpose,
-  };
 
   writer.write({
     id: toolCallId,
     type: "data-shell",
-    data: { ...shellData, status: STATUS.LOADING },
+    data: { ...shellData(input, toolCallId), status: STATUS.LOADING },
   });
 
   try {
@@ -143,7 +140,7 @@ export async function executeRuntimeCommand(
       id: toolCallId,
       type: "data-shell",
       data: {
-        ...shellData,
+        ...shellData(input, toolCallId),
         status: result.exitCode === 0 ? STATUS.COMPLETE : STATUS.ERROR,
         exitCode: result.exitCode,
         durationMs: result.durationMs,

@@ -15,12 +15,6 @@ const outputSchema = z.strictObject({
   devDependencies: z.record(z.string(), z.string()),
   routes: z.array(z.string()),
   keyFiles: z.array(projectPathSchema),
-  uiComponents: z
-    .array(projectPathSchema)
-    .describe("Installed shadcn/Base UI component modules available for reuse."),
-  componentFiles: z
-    .array(projectPathSchema)
-    .describe("Existing shared and feature component modules outside components/ui."),
   changedPaths: z.array(projectPathSchema),
   truncated: z.boolean(),
 });
@@ -31,7 +25,7 @@ export const exploreProject = ({
 }: Pick<ToolParams, "projectId" | "signal">) =>
   tool({
     description:
-      "Explore the project structure, dependencies, scripts, routes, key files, runtime changes, installed shadcn/Base UI modules, and existing shared components. Use near the start of a broad task, then inspect and reuse relevant components with readFiles before creating replacements.",
+      "Explore the project structure, dependencies, scripts, routes, key files, and runtime changes. Use near the start of a broad task, then inspect relevant files with readFiles before creating replacements.",
     inputSchema: z.strictObject({}),
     outputSchema: toolOutputSchema(outputSchema),
     execute: async () => {

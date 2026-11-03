@@ -44,7 +44,7 @@ const questionSchema = z
     }
   });
 
-export const userInputRequestSchema = z
+const userInputRequestSchema = z
   .strictObject({
     questions: z
       .array(questionSchema)
@@ -71,11 +71,11 @@ const answerSchema = z
     }
   });
 
-export const userInputResponseSchema = z.strictObject({
+const userInputResponseSchema = z.strictObject({
   answers: z.array(answerSchema).min(1).max(3),
 });
 
-export type UserInputRequest = z.infer<typeof userInputRequestSchema>;
+type UserInputRequest = z.infer<typeof userInputRequestSchema>;
 export type UserInputResponse = z.infer<typeof userInputResponseSchema>;
 
 export function validateUserInputResponse(

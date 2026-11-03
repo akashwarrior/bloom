@@ -28,7 +28,7 @@ function malformedEscapingReason(source: string) {
   return null;
 }
 
-export type SourceTextCandidate = {
+type SourceTextCandidate = {
   path: string;
   text: string;
 };

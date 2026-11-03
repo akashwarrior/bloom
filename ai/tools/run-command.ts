@@ -18,7 +18,7 @@ const cwdSchema = z
   .default(".")
   .describe("Project-relative working directory, or '.' for the project root.");
 
-export const runCommand = ({ mode, ...context }: ToolParams) =>
+export const runCommand = (context: ToolParams) =>
   tool({
     description:
       "Run one foreground pnpm or Node.js command directly in the isolated project runtime without a shell. Use for package scripts, checks, tests, package management, code generation, and one-off project scripts. For missing shadcn components use `pnpm exec shadcn add <name> --yes` (never npx; `--yes` is required). Never start a persistent server; webScrape owns preview startup. Source changes remain available even when the command exits nonzero.",
@@ -50,11 +50,8 @@ export const runCommand = ({ mode, ...context }: ToolParams) =>
     outputSchema: runtimeCommandOutputSchema,
     execute: async (input, { toolCallId }) => {
       try {
-        if (mode !== "BUILD") {
-          throw new Error("Commands are disabled in plan mode");
-        }
         assertForegroundCommand(input.executable, input.args);
-        return executeRuntimeCommand({ ...context, mode }, input, toolCallId);
+        return executeRuntimeCommand(context, input, toolCallId);
       } catch (error) {
         return reportCommandFailure(
           context,
