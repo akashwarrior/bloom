@@ -1,13 +1,12 @@
-export type FontCategory = "sans" | "serif" | "display" | "mono";
-export type FontWidth = "condensed" | "normal" | "wide";
-export type FontRole = "display" | "body" | "mono";
+type FontCategory = "sans" | "serif" | "display" | "mono";
+type FontWidth = "condensed" | "normal" | "wide";
+type FontRole = "display" | "body" | "mono";
 
-export type CatalogFont = {
+type CatalogFont = {
   family: string;
   category: FontCategory;
   width: FontWidth;
   roles: FontRole[];
-  character: string;
   /** Static weights available from next/font/google; empty for variable fonts. */
   weights: string[];
   variable: boolean;
@@ -18,14 +17,12 @@ const font = (
   category: FontCategory,
   width: FontWidth,
   roles: FontRole[],
-  character: string,
   weights: string[] | "variable",
 ): CatalogFont => ({
   family,
   category,
   width,
   roles,
-  character,
   weights: weights === "variable" ? [] : weights,
   variable: weights === "variable",
 });
@@ -35,99 +32,99 @@ const font = (
  * Every entry renders through next/font/google without extra configuration.
  */
 export const FONT_CATALOG: CatalogFont[] = [
-  font("Bricolage Grotesque", "sans", "normal", ["display", "body"], "quirky contemporary grotesk with optical sizes, characterful at large sizes", "variable"),
-  font("Space Grotesk", "sans", "normal", ["display", "body"], "technical geometric grotesk with idiosyncratic details", "variable"),
-  font("Syne", "display", "wide", ["display"], "expressive art-school sans that widens dramatically at heavy weights", "variable"),
-  font("Unbounded", "display", "wide", ["display"], "wide rounded geometric, futuristic and bold", "variable"),
-  font("Familjen Grotesk", "sans", "normal", ["display", "body"], "sharp editorial grotesk with tight curves", "variable"),
-  font("Schibsted Grotesk", "sans", "normal", ["display", "body"], "confident news grotesk, sturdy heavy weights", "variable"),
-  font("Instrument Sans", "sans", "normal", ["display", "body"], "precise neo-grotesk, crisp product feel", "variable"),
-  font("Hanken Grotesk", "sans", "normal", ["display", "body"], "clean neutral grotesk with soft geometry", "variable"),
-  font("Host Grotesk", "sans", "normal", ["display", "body"], "friendly modern grotesk with open apertures", "variable"),
-  font("Funnel Display", "display", "normal", ["display"], "modern display grotesk with ink traps, sculpted at large sizes", "variable"),
-  font("Funnel Sans", "sans", "normal", ["body"], "text companion to Funnel Display", "variable"),
-  font("Gabarito", "sans", "normal", ["display", "body"], "rounded geometric, friendly and bold", "variable"),
-  font("Mona Sans", "sans", "normal", ["display", "body"], "strong variable grotesk, confident product marketing voice", "variable"),
-  font("Hubot Sans", "sans", "normal", ["display"], "technical, slightly squared companion to Mona Sans", "variable"),
-  font("Archivo", "sans", "normal", ["display", "body"], "versatile grotesk, punchy at black weights", "variable"),
-  font("Red Hat Display", "sans", "normal", ["display"], "geometric-humanist display with warm curves", "variable"),
-  font("Sora", "sans", "normal", ["display", "body"], "geometric with a technical, fintech/crypto tone", "variable"),
-  font("Outfit", "sans", "normal", ["display", "body"], "clean geometric, round and modern", "variable"),
-  font("Urbanist", "sans", "normal", ["display", "body"], "minimal geometric with low contrast", "variable"),
-  font("Plus Jakarta Sans", "sans", "normal", ["display", "body"], "modern geometric with personality, startup tone", "variable"),
-  font("Manrope", "sans", "normal", ["display", "body"], "semi-condensed modern grotesk, compact and precise", "variable"),
-  font("DM Sans", "sans", "normal", ["body", "display"], "low-contrast geometric, very legible", "variable"),
-  font("Figtree", "sans", "normal", ["body"], "friendly geometric text face", "variable"),
-  font("Onest", "sans", "normal", ["body"], "neutral modern text face", "variable"),
-  font("Geist", "sans", "normal", ["body"], "neutral Swiss-style UI face", "variable"),
-  font("Rethink Sans", "sans", "normal", ["body", "display"], "modern grotesk with subtle quirks", "variable"),
-  font("Albert Sans", "sans", "normal", ["body", "display"], "Scandinavian geometric sans", "variable"),
-  font("Epilogue", "sans", "normal", ["display", "body"], "editorial grotesk with sharp, dense heavy weights", "variable"),
-  font("Inter Tight", "sans", "normal", ["display"], "tightly spaced neo-grotesk for big headlines", "variable"),
-  font("Wix Madefor Display", "sans", "normal", ["display"], "friendly rounded-geometric product display face", "variable"),
-  font("Wix Madefor Text", "sans", "normal", ["body"], "text companion to Wix Madefor Display", "variable"),
-  font("Inter", "sans", "normal", ["body"], "neutral UI text face", "variable"),
-  font("IBM Plex Sans", "sans", "normal", ["body", "display"], "engineered corporate grotesk", "variable"),
-  font("Public Sans", "sans", "normal", ["body"], "neutral, sturdy text face", "variable"),
-  font("Noto Sans", "sans", "normal", ["body"], "neutral humanist text face with wide language coverage", "variable"),
-  font("Nunito Sans", "sans", "normal", ["display", "body"], "soft, slightly rounded humanist sans", "variable"),
-  font("Roboto", "sans", "normal", ["body"], "familiar neo-grotesk system text face", "variable"),
-  font("Raleway", "sans", "normal", ["display", "body"], "elegant thin-to-black geometric sans", "variable"),
-  font("Montserrat", "sans", "normal", ["display", "body"], "wide urban geometric sans", "variable"),
-  font("Source Sans 3", "sans", "normal", ["body"], "clear humanist text face", "variable"),
-  font("Oxanium", "display", "normal", ["display"], "squared techno display face", "variable"),
-  font("Work Sans", "sans", "normal", ["body", "display"], "grotesk with early-Swiss character", "variable"),
-  font("Rubik", "sans", "normal", ["display", "body"], "slightly rounded corners, playful but sturdy", "variable"),
-  font("Geologica", "sans", "normal", ["display", "body"], "geometric with optional sharpness, contemporary", "variable"),
-  font("Chivo", "sans", "normal", ["display", "body"], "grotesk with strong heavy weights", "variable"),
-  font("Darker Grotesque", "display", "condensed", ["display"], "tall, tight grotesk for stacked headlines", "variable"),
-  font("Anton", "display", "condensed", ["display"], "heavy condensed poster gothic", ["400"]),
-  font("Bebas Neue", "display", "condensed", ["display"], "all-caps condensed poster face", ["400"]),
-  font("Oswald", "display", "condensed", ["display"], "condensed gothic, editorial headlines", "variable"),
-  font("Big Shoulders", "display", "condensed", ["display"], "condensed industrial Chicago-style gothic", "variable"),
-  font("League Gothic", "display", "condensed", ["display"], "classic tall condensed gothic", "variable"),
-  font("Antonio", "display", "condensed", ["display"], "refined condensed sans", "variable"),
-  font("Sofia Sans Condensed", "display", "condensed", ["display", "body"], "condensed grotesk with a broad weight range", "variable"),
-  font("Archivo Black", "display", "normal", ["display"], "heavy grotesk, blunt and loud", ["400"]),
-  font("Dela Gothic One", "display", "wide", ["display"], "ultra-heavy chunky gothic, blocky poster voice", ["400"]),
-  font("Rubik Mono One", "display", "wide", ["display"], "chunky monospaced capitals, bold and graphic", ["400"]),
-  font("Bowlby One", "display", "normal", ["display"], "fat poster sans", ["400"]),
-  font("Titan One", "display", "normal", ["display"], "rounded heavy, toy-like", ["400"]),
-  font("Lilita One", "display", "normal", ["display"], "rounded heavy, playful", ["400"]),
-  font("Bagel Fat One", "display", "wide", ["display"], "super-round fat display", ["400"]),
-  font("Climate Crisis", "display", "wide", ["display"], "ultra-heavy compressed-to-wide variable display", "variable"),
-  font("Krona One", "display", "wide", ["display"], "wide extended grotesk", ["400"]),
-  font("Michroma", "display", "wide", ["display"], "wide squared technical face", ["400"]),
-  font("Syncopate", "display", "wide", ["display"], "wide all-caps geometric", ["400", "700"]),
-  font("Unna", "serif", "normal", ["display"], "elegant transitional serif", ["400", "700"]),
-  font("Alfa Slab One", "display", "normal", ["display"], "heavy slab serif", ["400"]),
-  font("Righteous", "display", "normal", ["display"], "retro rounded geometric", ["400"]),
-  font("Shrikhand", "display", "normal", ["display"], "retro heavy italic", ["400"]),
-  font("Instrument Serif", "serif", "condensed", ["display"], "elegant condensed display serif, editorial luxury", ["400"]),
-  font("Fraunces", "serif", "normal", ["display", "body"], "soft, wonky old-style serif with optical sizes", "variable"),
-  font("Playfair Display", "serif", "normal", ["display"], "high-contrast didone for headlines", "variable"),
-  font("DM Serif Display", "serif", "normal", ["display"], "high-contrast display serif", ["400"]),
-  font("Young Serif", "serif", "normal", ["display"], "warm, heavy old-style serif", ["400"]),
-  font("Gloock", "serif", "normal", ["display"], "sharp high-contrast serif", ["400"]),
-  font("Libre Caslon Display", "serif", "normal", ["display"], "classic Caslon display", ["400"]),
-  font("Bodoni Moda", "serif", "normal", ["display"], "fashion didone with optical sizes", "variable"),
-  font("Cormorant", "serif", "normal", ["display"], "delicate Garamond-style display", "variable"),
-  font("EB Garamond", "serif", "normal", ["body", "display"], "classic book Garamond", "variable"),
-  font("Newsreader", "serif", "normal", ["body", "display"], "editorial text serif with optical sizes", "variable"),
-  font("Literata", "serif", "normal", ["body"], "contemporary book serif", "variable"),
-  font("Source Serif 4", "serif", "normal", ["body", "display"], "versatile text serif", "variable"),
-  font("Crimson Pro", "serif", "normal", ["body"], "literary text serif", "variable"),
-  font("Lora", "serif", "normal", ["body"], "calligraphic text serif", "variable"),
-  font("Noto Serif", "serif", "normal", ["display", "body"], "neutral book serif", "variable"),
-  font("Merriweather", "serif", "normal", ["display", "body"], "sturdy screen serif with large x-height", "variable"),
-  font("Roboto Slab", "serif", "normal", ["display", "body"], "mechanical slab serif", "variable"),
-  font("JetBrains Mono", "mono", "normal", ["mono"], "developer monospace", "variable"),
-  font("IBM Plex Mono", "mono", "normal", ["mono"], "engineered monospace", ["300", "400", "500", "600", "700"]),
-  font("Space Mono", "mono", "normal", ["mono", "display"], "retro-technical monospace", ["400", "700"]),
-  font("Geist Mono", "mono", "normal", ["mono"], "neutral UI monospace", "variable"),
-  font("DM Mono", "mono", "normal", ["mono"], "soft geometric monospace", ["300", "400", "500"]),
-  font("Fragment Mono", "mono", "normal", ["mono"], "Helvetica-like monospace", ["400"]),
-  font("Martian Mono", "mono", "wide", ["mono", "display"], "wide technical monospace", "variable"),
+  font("Bricolage Grotesque", "sans", "normal", ["display", "body"], "variable"),
+  font("Space Grotesk", "sans", "normal", ["display", "body"], "variable"),
+  font("Syne", "display", "wide", ["display"], "variable"),
+  font("Unbounded", "display", "wide", ["display"], "variable"),
+  font("Familjen Grotesk", "sans", "normal", ["display", "body"], "variable"),
+  font("Schibsted Grotesk", "sans", "normal", ["display", "body"], "variable"),
+  font("Instrument Sans", "sans", "normal", ["display", "body"], "variable"),
+  font("Hanken Grotesk", "sans", "normal", ["display", "body"], "variable"),
+  font("Host Grotesk", "sans", "normal", ["display", "body"], "variable"),
+  font("Funnel Display", "display", "normal", ["display"], "variable"),
+  font("Funnel Sans", "sans", "normal", ["body"], "variable"),
+  font("Gabarito", "sans", "normal", ["display", "body"], "variable"),
+  font("Mona Sans", "sans", "normal", ["display", "body"], "variable"),
+  font("Hubot Sans", "sans", "normal", ["display"], "variable"),
+  font("Archivo", "sans", "normal", ["display", "body"], "variable"),
+  font("Red Hat Display", "sans", "normal", ["display"], "variable"),
+  font("Sora", "sans", "normal", ["display", "body"], "variable"),
+  font("Outfit", "sans", "normal", ["display", "body"], "variable"),
+  font("Urbanist", "sans", "normal", ["display", "body"], "variable"),
+  font("Plus Jakarta Sans", "sans", "normal", ["display", "body"], "variable"),
+  font("Manrope", "sans", "normal", ["display", "body"], "variable"),
+  font("DM Sans", "sans", "normal", ["body", "display"], "variable"),
+  font("Figtree", "sans", "normal", ["body"], "variable"),
+  font("Onest", "sans", "normal", ["body"], "variable"),
+  font("Geist", "sans", "normal", ["body"], "variable"),
+  font("Rethink Sans", "sans", "normal", ["body", "display"], "variable"),
+  font("Albert Sans", "sans", "normal", ["body", "display"], "variable"),
+  font("Epilogue", "sans", "normal", ["display", "body"], "variable"),
+  font("Inter Tight", "sans", "normal", ["display"], "variable"),
+  font("Wix Madefor Display", "sans", "normal", ["display"], "variable"),
+  font("Wix Madefor Text", "sans", "normal", ["body"], "variable"),
+  font("Inter", "sans", "normal", ["body"], "variable"),
+  font("IBM Plex Sans", "sans", "normal", ["body", "display"], "variable"),
+  font("Public Sans", "sans", "normal", ["body"], "variable"),
+  font("Noto Sans", "sans", "normal", ["body"], "variable"),
+  font("Nunito Sans", "sans", "normal", ["display", "body"], "variable"),
+  font("Roboto", "sans", "normal", ["body"], "variable"),
+  font("Raleway", "sans", "normal", ["display", "body"], "variable"),
+  font("Montserrat", "sans", "normal", ["display", "body"], "variable"),
+  font("Source Sans 3", "sans", "normal", ["body"], "variable"),
+  font("Oxanium", "display", "normal", ["display"], "variable"),
+  font("Work Sans", "sans", "normal", ["body", "display"], "variable"),
+  font("Rubik", "sans", "normal", ["display", "body"], "variable"),
+  font("Geologica", "sans", "normal", ["display", "body"], "variable"),
+  font("Chivo", "sans", "normal", ["display", "body"], "variable"),
+  font("Darker Grotesque", "display", "condensed", ["display"], "variable"),
+  font("Anton", "display", "condensed", ["display"], ["400"]),
+  font("Bebas Neue", "display", "condensed", ["display"], ["400"]),
+  font("Oswald", "display", "condensed", ["display"], "variable"),
+  font("Big Shoulders", "display", "condensed", ["display"], "variable"),
+  font("League Gothic", "display", "condensed", ["display"], "variable"),
+  font("Antonio", "display", "condensed", ["display"], "variable"),
+  font("Sofia Sans Condensed", "display", "condensed", ["display", "body"], "variable"),
+  font("Archivo Black", "display", "normal", ["display"], ["400"]),
+  font("Dela Gothic One", "display", "wide", ["display"], ["400"]),
+  font("Rubik Mono One", "display", "wide", ["display"], ["400"]),
+  font("Bowlby One", "display", "normal", ["display"], ["400"]),
+  font("Titan One", "display", "normal", ["display"], ["400"]),
+  font("Lilita One", "display", "normal", ["display"], ["400"]),
+  font("Bagel Fat One", "display", "wide", ["display"], ["400"]),
+  font("Climate Crisis", "display", "wide", ["display"], "variable"),
+  font("Krona One", "display", "wide", ["display"], ["400"]),
+  font("Michroma", "display", "wide", ["display"], ["400"]),
+  font("Syncopate", "display", "wide", ["display"], ["400", "700"]),
+  font("Unna", "serif", "normal", ["display"], ["400", "700"]),
+  font("Alfa Slab One", "display", "normal", ["display"], ["400"]),
+  font("Righteous", "display", "normal", ["display"], ["400"]),
+  font("Shrikhand", "display", "normal", ["display"], ["400"]),
+  font("Instrument Serif", "serif", "condensed", ["display"], ["400"]),
+  font("Fraunces", "serif", "normal", ["display", "body"], "variable"),
+  font("Playfair Display", "serif", "normal", ["display"], "variable"),
+  font("DM Serif Display", "serif", "normal", ["display"], ["400"]),
+  font("Young Serif", "serif", "normal", ["display"], ["400"]),
+  font("Gloock", "serif", "normal", ["display"], ["400"]),
+  font("Libre Caslon Display", "serif", "normal", ["display"], ["400"]),
+  font("Bodoni Moda", "serif", "normal", ["display"], "variable"),
+  font("Cormorant", "serif", "normal", ["display"], "variable"),
+  font("EB Garamond", "serif", "normal", ["body", "display"], "variable"),
+  font("Newsreader", "serif", "normal", ["body", "display"], "variable"),
+  font("Literata", "serif", "normal", ["body"], "variable"),
+  font("Source Serif 4", "serif", "normal", ["body", "display"], "variable"),
+  font("Crimson Pro", "serif", "normal", ["body"], "variable"),
+  font("Lora", "serif", "normal", ["body"], "variable"),
+  font("Noto Serif", "serif", "normal", ["display", "body"], "variable"),
+  font("Merriweather", "serif", "normal", ["display", "body"], "variable"),
+  font("Roboto Slab", "serif", "normal", ["display", "body"], "variable"),
+  font("JetBrains Mono", "mono", "normal", ["mono"], "variable"),
+  font("IBM Plex Mono", "mono", "normal", ["mono"], ["300", "400", "500", "600", "700"]),
+  font("Space Mono", "mono", "normal", ["mono", "display"], ["400", "700"]),
+  font("Geist Mono", "mono", "normal", ["mono"], "variable"),
+  font("DM Mono", "mono", "normal", ["mono"], ["300", "400", "500"]),
+  font("Fragment Mono", "mono", "normal", ["mono"], ["400"]),
+  font("Martian Mono", "mono", "wide", ["mono", "display"], "variable"),
 ];
 
 const BY_FAMILY = new Map(
@@ -138,45 +135,12 @@ export function findCatalogFont(family: string) {
   return BY_FAMILY.get(family.trim().toLowerCase()) ?? null;
 }
 
-/** next/font/google export identifier, e.g. "Source Serif 4" -> "Source_Serif_4". */
-export function nextFontExportName(family: string) {
-  return family.trim().replace(/\s+/g, "_");
-}
-
-/** Weights to request for a static font; variable fonts need none. */
-export function weightsFor(entry: CatalogFont, wanted: number[]) {
-  if (entry.variable) return null;
-  const available = entry.weights.map(Number);
-  const chosen = new Set<number>();
-  for (const weight of wanted) {
-    const nearest = available.reduce((best, candidate) =>
-      Math.abs(candidate - weight) < Math.abs(best - weight) ? candidate : best,
-    available[0]!);
-    chosen.add(nearest);
-  }
-  return [...chosen].sort((a, b) => a - b).map(String);
-}
-
-export function catalogForPrompt() {
-  const group = (predicate: (entry: CatalogFont) => boolean) =>
-    FONT_CATALOG.filter(predicate)
-      .map((entry) => `${entry.family} (${entry.width === "normal" ? "" : `${entry.width}, `}${entry.character})`)
-      .join("; ");
-  return [
-    `Display sans: ${group((entry) => entry.roles.includes("display") && entry.category === "sans")}`,
-    `Display/poster: ${group((entry) => entry.category === "display")}`,
-    `Serif: ${group((entry) => entry.category === "serif")}`,
-    `Body text: ${group((entry) => entry.roles.includes("body"))}`,
-    `Mono: ${group((entry) => entry.category === "mono")}`,
-  ].join("\n");
-}
-
 /**
  * Glyph metrics measured in Chromium at 100px: average lowercase advance width
  * (em) at 400 and 700, x-height and cap height (em), and the foot/stem width
  * ratio of a capital I (above ~1.8 indicates serifs or slab terminals).
  */
-export type FontMetrics = { w400: number; w700: number; x: number; cap: number; serif: number };
+type FontMetrics = { w400: number; w700: number; x: number; cap: number; serif: number };
 
 export const FONT_METRICS: Record<string, FontMetrics> = {
   "Bricolage Grotesque": { w400: 0.535, w700: 0.565, x: 0.52, cap: 0.66, serif: 1 },

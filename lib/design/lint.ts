@@ -1,16 +1,14 @@
 export type DesignViolation = {
   path: string;
   line: number;
-  kind: "raw-color" | "hand-rolled-ui" | "reference-brand" | "copied-copy" | "copied-claim" | "invented-stat" | "fabricated-proof" | "nested-block";
+  kind: "raw-color" | "hand-rolled-ui" | "reference-brand" | "copied-copy" | "copied-claim" | "invented-stat" | "fabricated-proof" | "decorative-glow" | "glassmorphism";
   excerpt: string;
   fix: string;
 };
 
-export type ReferenceCopy = {
+type ReferenceCopy = {
   brands: string[];
   headings: string[];
-  /** The new project's brand, treated as a placeholder when comparing short headlines. */
-  ownBrand?: string | null;
 };
 
 const COLOR_PREFIXES =
@@ -91,6 +89,11 @@ const SHADCN_FOR: Record<string, string> = {
   table: "Table from @/components/ui/table",
 };
 const LINK_CLASSES = /<(?:a|Link)\b[^>]*?className=(?:"([^"]*)"|\{?`([^`]*)`)/g;
+const ROUNDED_FULL = /(?:^|[\s"'`])rounded-full(?:[\s"'`]|$)/;
+const NON_BACKDROP_BLUR = /(?:^|[\s"'`])blur-(?:sm|md|lg|xl|2xl|3xl|\[[^\]]+\])(?:[\s"'`]|$)/;
+const DECORATIVE_FILL = /(?:^|[\s"'`])(?:bg|from|via|to)-[^\s"'`]+/;
+const BACKDROP_BLUR = /(?:^|[\s"'`])backdrop-blur(?:-\w+)?(?:[\s"'`]|$)/;
+const TRANSLUCENT_FILL = /(?:^|[\s"'`])bg-[\w-]+\/\d{1,3}(?:[\s"'`]|$)/;
 
 /** A link carrying a fill, horizontal padding and rounding: a hand-made button. */
 function buttonLookalike(text: string) {
@@ -102,7 +105,6 @@ function buttonLookalike(text: string) {
 
 /** A line of bare JSX text (copy continued from a previous line), not code. */
 const JSX_TEXT_LINE = /^\s*[A-Za-z][^<>{}=;()]*$/;
-const FULL_BLOCK = /<(?:Hero|FeatureCards|Bento|FeatureSplit|Steps|Faq|Pricing|Cta|LogoStrip|Statement)\b/;
 const FABRICATED_PROOF_FILE = /(?:testimonial|review|social-proof|customer-quote|press-quote)s?(?:-section)?\.(?:tsx|jsx)$/i;
 const NAMED_ENDORSEMENT = /\b(?:audited|backed|funded|certified|trusted|used|loved|recommended|endorsed|insured|partnered|powered) by\s+(?:the\s+)?([\w.&-]+)/gi;
 
@@ -188,10 +190,7 @@ export function lintSourceChange({
       return words.length >= 5 ? shingles(words, 5) : [];
     }),
   );
-  const brandTokens = new Set([
-    ...brands.flatMap((brand) => normalizeWords(brand)),
-    ...normalizeWords(reference?.ownBrand ?? ""),
-  ]);
+  const brandTokens = new Set(brands.flatMap((brand) => normalizeWords(brand)));
   const withBrandPlaceholder = (words: string[]) =>
     words.map((word) => (brandTokens.has(word) ? "{brand}" : word)).join(" ");
   const headingWordSets = (reference?.headings ?? [])
@@ -221,18 +220,6 @@ export function lintSourceChange({
     });
   }
 
-  const wrapper = /<(?:Section|Container)\b/.exec(after);
-  const block = FULL_BLOCK.exec(after);
-  if (wrapper && block && !path.startsWith("components/blocks/")) {
-    violations.push({
-      path,
-      line: after.slice(0, block.index).split("\n").length,
-      kind: "nested-block",
-      excerpt: `<${wrapper[0].slice(1)}> wraps ${block[0]}`,
-      fix: `${block[0]} is a complete section with its own <section>, width, heading, and spacing. Return it directly (pass the heading via its heading prop) instead of wrapping it in <Section> or <Container>.`,
-    });
-  }
-
   for (const { line, text } of lines) {
     if (/^\s*(?:import|export\s+\*|\/\/|\/\*|\*)/.test(text)) continue;
     const proof = FABRICATED_PROOF_LINE.exec(text)?.[0] ?? namedEndorsement(literalText(text));
@@ -245,25 +232,23 @@ export function lintSourceChange({
         fix: `"${proof}" presents an invented customer, review, rating, or endorsement by a named organization as real. Remove it; never fabricate testimonials, reviewer names, star ratings, auditors, investors, or partners.`,
       });
     }
-    if (!path.startsWith("components/blocks/")) {
-      for (const match of text.matchAll(NATIVE_CONTROL)) {
-        violations.push({
-          path,
-          line,
-          kind: "hand-rolled-ui",
-          excerpt: excerpt(text),
-          fix: `A native <${match[1]}> skips the shadcn theme. Use ${SHADCN_FOR[match[1]!]} and style it with variants or className.`,
-        });
-      }
-      if (buttonLookalike(text)) {
-        violations.push({
-          path,
-          line,
-          kind: "hand-rolled-ui",
-          excerpt: excerpt(text),
-          fix: 'A link styled as a button skips the shadcn theme. Use <Button render={<a href="..." />} nativeButton={false}> (or render={<Link href="..." />}) with a variant and size.',
-        });
-      }
+    for (const match of text.matchAll(NATIVE_CONTROL)) {
+      violations.push({
+        path,
+        line,
+        kind: "hand-rolled-ui",
+        excerpt: excerpt(text),
+        fix: `A native <${match[1]}> skips the shadcn theme. Use ${SHADCN_FOR[match[1]!]} and style it with variants or className.`,
+      });
+    }
+    if (buttonLookalike(text)) {
+      violations.push({
+        path,
+        line,
+        kind: "hand-rolled-ui",
+        excerpt: excerpt(text),
+        fix: 'A link styled as a button skips the shadcn theme. Use <Button render={<a href="..." />} nativeButton={false}> (or render={<Link href="..." />}) with a variant and size.',
+      });
     }
     for (const match of text.matchAll(RAW_PALETTE_CLASS)) {
       violations.push({
@@ -271,7 +256,7 @@ export function lintSourceChange({
         line,
         kind: "raw-color",
         excerpt: match[0],
-        fix: "Replace with a design token class (bg-surface-N, text-surface-N-foreground, bg-primary, text-muted-foreground, border-border, ...).",
+        fix: "Replace with a semantic token class (bg-background, bg-card, bg-muted, bg-primary, text-muted-foreground, border-border, ...).",
       });
     }
     for (const match of text.matchAll(ARBITRARY_COLOR_CLASS)) {
@@ -280,7 +265,25 @@ export function lintSourceChange({
         line,
         kind: "raw-color",
         excerpt: match[0],
-        fix: "Arbitrary color values bypass the design system. Use a token class, or add a token to app/globals.css if a genuinely new color is needed.",
+        fix: "Arbitrary color values bypass the design system. Use a semantic token class; if a genuinely new color is needed, change the preset instead of writing it in JSX.",
+      });
+    }
+    if (ROUNDED_FULL.test(text) && NON_BACKDROP_BLUR.test(text) && DECORATIVE_FILL.test(text)) {
+      violations.push({
+        path,
+        line,
+        kind: "decorative-glow",
+        excerpt: excerpt(text),
+        fix: "A blurred rounded fill is a decorative glow blob. Remove it; build depth with real imagery, a solid surface, a border, or typographic scale instead.",
+      });
+    }
+    if (BACKDROP_BLUR.test(text) && TRANSLUCENT_FILL.test(text)) {
+      violations.push({
+        path,
+        line,
+        kind: "glassmorphism",
+        excerpt: excerpt(text),
+        fix: "A backdrop blur over a translucent fill is glassmorphism. Use a solid semantic surface (bg-background, bg-card, bg-muted) with a border-border hairline instead.",
       });
     }
     const lower = text.toLowerCase();
@@ -291,7 +294,7 @@ export function lintSourceChange({
           line,
           kind: "reference-brand",
           excerpt: excerpt(text),
-          fix: `"${brand}" is a reference brand. Use the brief's brand name instead.`,
+          fix: `"${brand}" is a reference brand. Use the brand name from the user's request instead.`,
         });
       }
     }
@@ -307,7 +310,7 @@ export function lintSourceChange({
           line,
           kind: "copied-copy",
           excerpt: excerpt(text),
-          fix: `"${copied}" is copied from a reference headline. Write original copy in the brief's voice.`,
+          fix: `"${copied}" is copied from a reference headline. Write original copy for this page.`,
         });
       }
     }

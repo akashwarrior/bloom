@@ -88,7 +88,7 @@ export function contrastRatio(first: Rgb, second: Rgb) {
   return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 }
 
-export type Lab = { l: number; a: number; b: number };
+type Lab = { l: number; a: number; b: number };
 
 export function toLab(color: Rgb): Lab {
   const r = linearChannel(color.r);
@@ -154,7 +154,7 @@ export function hueName({ r, g, b }: Rgb) {
   return "pink";
 }
 
-export type Hsl = { h: number; s: number; l: number };
+type Hsl = { h: number; s: number; l: number };
 
 export function rgbToHsl({ r, g, b }: Rgb): Hsl {
   const [rn, gn, bn] = [r / 255, g / 255, b / 255];
