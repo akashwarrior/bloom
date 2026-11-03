@@ -6,19 +6,19 @@ import { DESIGN_PROPS, editClass, type DesignEdits } from "./styles.ts";
 
 type SourceFile = { path: string; content: string };
 
-export type DesignPatchInput = {
+type DesignPatchInput = {
   selection: ElementSelection;
   edits: DesignEdits;
   text?: { from: string; to: string };
 };
 
-export type DesignPatchResult =
+type DesignPatchResult =
   | { ok: true; path: string; content: string; line: number; classes: string[] }
   | { ok: false; error: string };
 
 const BREAKPOINT_VARIANT = /^(?:sm|md|lg|xl|2xl|min-\[[^\]]+\]|max-\w+|max-\[[^\]]+\]):/;
 
-/** A tailwind-merge that knows the project's own theme names (text-display, bg-surface-2, shadow-card, ...). */
+/** A tailwind-merge that knows the project's own theme names (text-2xl, bg-primary, shadow-sm, ...). */
 function projectMerger(files: SourceFile[]) {
   const css = files.filter((file) => file.path.endsWith(".css")).map((file) => file.content).join("\n");
   const names = (prefix: string) => [

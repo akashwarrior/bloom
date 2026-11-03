@@ -31,3 +31,17 @@ export function browserDiagnosticKey(diagnostic: BrowserDiagnostic) {
     diagnostic.message,
   ].join(":");
 }
+
+/**
+ * HMR transport noise is specific to the development preview: the generated
+ * project runs behind a published Docker port, so Next.js can reject the
+ * websocket handshake even though the rendered page is healthy. It says
+ * nothing about the design and must not block a build.
+ */
+export function isDevHmrDiagnostic(
+  diagnostic: Pick<BrowserDiagnostic, "message" | "url">,
+) {
+  return /\/_next\/(?:webpack-)?hmr\b/.test(
+    `${diagnostic.url ?? ""} ${diagnostic.message}`,
+  );
+}

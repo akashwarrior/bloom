@@ -1,4 +1,4 @@
-export type ScreenshotCapture = {
+type ScreenshotCapture = {
   bytes: Uint8Array;
 };
 
@@ -13,7 +13,7 @@ export function selectScreenshots<T extends ScreenshotCapture>(
   const unique: T[] = [];
 
   for (const screenshot of screenshots) {
-    const duplicate = unique.some((candidate) => {
+    const duplicateIndex = unique.findIndex((candidate) => {
       if (candidate.bytes.byteLength !== screenshot.bytes.byteLength) {
         return false;
       }
@@ -27,9 +27,12 @@ export function selectScreenshots<T extends ScreenshotCapture>(
       return true;
     });
 
-    if (!duplicate) {
-      unique.push(screenshot);
+    if (duplicateIndex >= 0) {
+      // Keep the later capture: it carries the lower scroll position, which is
+      // what capture-coverage checks need even when the pixels are identical.
+      unique.splice(duplicateIndex, 1);
     }
+    unique.push(screenshot);
   }
 
   if (unique.length <= maxScreenshots) {

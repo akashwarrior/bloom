@@ -3,12 +3,9 @@ import { matchesGlob } from "node:path";
 import "server-only";
 
 import { normalizeProjectPath } from "@/lib/project-path";
-import { normalizePatch } from "@/lib/runtime/patch-normalize";
 import type { RuntimeFile } from "@/lib/runtime/protocol";
-import { applyPatch, diffLines } from "diff";
-import { applyLineEdits, type LineEdit } from "@/lib/runtime/line-edits";
-
-export type { LineEdit };
+import { applyTextEdits, type TextEdit } from "@/lib/runtime/text-edits";
+import { diffLines } from "diff";
 
 const MAX_FILE_SIZE = 1_000_000;
 const MAX_PROJECT_SIZE = 20_000_000;
@@ -58,10 +55,8 @@ export type CodeSearchInput = {
 
 export type AtomicFileChange =
   | { type: "create"; path: string; content: string }
-  | { type: "patch"; path: string; patch: string; }
-  | { type: "edit"; path: string; edits: LineEdit[] }
-  | { type: "delete"; path: string }
-  | { type: "move"; from: string; to: string };
+  | { type: "edit"; path: string; edits: TextEdit[] }
+  | { type: "delete"; path: string };
 
 
 function workspaceFile(content: string): WorkspaceFile {
@@ -283,14 +278,6 @@ export class SourceFiles {
     const allKeyFiles = paths.filter((path) =>
       keyPatterns.some((pattern) => pattern.test(path)),
     );
-    const allUiComponents = paths.filter((path) =>
-      /^(?:src\/)?components\/ui\/[^/]+\.[cm]?[jt]sx$/.test(path),
-    );
-    const allComponentFiles = paths.filter(
-      (path) =>
-        /^(?:src\/)?components\/.*\.[cm]?[jt]sx$/.test(path) &&
-        !/^(?:src\/)?components\/ui\//.test(path),
-    );
     const allRoutes = [
       ...new Set(paths.map(routeFromFile).filter(Boolean)),
     ].sort() as string[];
@@ -300,8 +287,6 @@ export class SourceFiles {
       Object.keys(dependencies).length > 300 ||
       Object.keys(devDependencies).length > 300 ||
       allKeyFiles.length > 100 ||
-      allUiComponents.length > 200 ||
-      allComponentFiles.length > 300 ||
       allRoutes.length > 200 ||
       allChangedPaths.length > 500;
     scripts = cappedRecord(scripts, 100);
@@ -314,8 +299,6 @@ export class SourceFiles {
       devDependencies,
       routes: allRoutes.slice(0, 200),
       keyFiles: allKeyFiles.slice(0, 100),
-      uiComponents: allUiComponents.slice(0, 200),
-      componentFiles: allComponentFiles.slice(0, 300),
       changedPaths: allChangedPaths.slice(0, 500),
       truncated,
     };
@@ -508,9 +491,7 @@ export class SourceFiles {
     const next = new Map(before);
     const occupied = new Set<string>();
     const normalized = changes.map((change) => {
-      const source = normalizeProjectPath(
-        change.type === "move" ? change.from : change.path,
-      );
+      const source = normalizeProjectPath(change.path);
       if (!isModelVisiblePath(source)) {
         throw new Error(`${source} is unavailable to the coding agent`);
       }
@@ -520,19 +501,6 @@ export class SourceFiles {
         );
       }
       occupied.add(source);
-      if (change.type === "move") {
-        const to = normalizeProjectPath(change.to);
-        if (!isModelVisiblePath(to)) {
-          throw new Error(`${to} is unavailable to the coding agent`);
-        }
-        if (occupied.has(to)) {
-          throw new Error(
-            `${to} conflicts with another path in this mutation batch`,
-          );
-        }
-        occupied.add(to);
-        return { ...change, from: source, to };
-      }
       return { ...change, path: source };
     });
 
@@ -546,41 +514,14 @@ export class SourceFiles {
     >();
 
     for (const change of normalized) {
-      const path = change.type === "move" ? change.from : change.path;
+      const path = change.path;
       const existing = before.get(path);
       if (change.type === "create") {
         continue;
       }
       if (!existing) throw new Error(`${path} does not exist`);
-      if (change.type === "move" && before.has(change.to)) {
-        throw new Error(`${change.to} already exists`);
-      }
       if (change.type === "edit") {
-        const content = applyLineEdits(path, existing.content, change.edits);
-        if (content === existing.content) {
-          throw new Error(`${path} edit made no change`);
-        }
-        patched.set(path, {
-          content,
-          ...lineChanges(existing.content, content),
-        });
-      }
-      if (change.type === "patch") {
-        const content = applyPatch(existing.content, normalizePatch(change.patch), {
-          fuzzFactor: 0,
-          autoConvertLineEndings: true,
-        });
-
-        if (content === false) {
-          throw new Error(
-            `${path} patch does not match the current file; reread and retry`,
-          );
-        }
-
-        if (content === existing.content) {
-          throw new Error(`${path} patch made no change`);
-        }
-
+        const content = applyTextEdits(path, existing.content, change.edits);
         patched.set(path, {
           content,
           ...lineChanges(existing.content, content),
@@ -590,7 +531,7 @@ export class SourceFiles {
 
     const summaries: Array<{
       path: string;
-      operation: "created" | "edited" | "deleted" | "moved";
+      operation: "created" | "edited" | "deleted";
       addedLines: number;
       deletedLines: number;
     }> = [];
@@ -605,7 +546,7 @@ export class SourceFiles {
           addedLines: lineCount(change.content),
           deletedLines: existing ? lineCount(existing.content) : 0,
         });
-      } else if (change.type === "patch" || change.type === "edit") {
+      } else if (change.type === "edit") {
         const result = patched.get(change.path)!;
 
         next.set(
@@ -619,7 +560,7 @@ export class SourceFiles {
           addedLines: result.addedLines,
           deletedLines: result.deletedLines,
         });
-      } else if (change.type === "delete") {
+      } else {
         const existing = before.get(change.path)!;
         next.delete(change.path);
         summaries.push({
@@ -627,16 +568,6 @@ export class SourceFiles {
           operation: "deleted",
           addedLines: 0,
           deletedLines: lineCount(existing.content),
-        });
-      } else {
-        const existing = before.get(change.from)!;
-        next.delete(change.from);
-        next.set(change.to, existing);
-        summaries.push({
-          path: change.to,
-          operation: "moved",
-          addedLines: 0,
-          deletedLines: 0,
         });
       }
     }

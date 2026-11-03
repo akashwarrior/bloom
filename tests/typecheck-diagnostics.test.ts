@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  parseTypeScriptErrorLocations,
   skippedTypeScriptValidation,
   summarizeTypeScriptValidation,
+  typeScriptErrorTextFor,
   unavailableTypeScriptValidation,
 } from "../lib/runtime/typecheck-diagnostics.ts";
 
@@ -48,6 +50,30 @@ test("returns bounded, deduplicated tsc errors as non-fatal diagnostics", () => 
   assert.equal(result.tscError?.match(/Cannot find module/g)?.length, 1);
   assert.doesNotMatch(result.tscError ?? "", /unrelated tsc banner/);
   assert.ok((result.tscError?.length ?? 0) <= 6_000);
+});
+
+test("extracts one location per file and scopes diagnostics to a file", () => {
+  const diagnostics = [
+    "TypeScript check exited with code 2. The source changes were preserved.",
+    "app/page.tsx(385,9): error TS17002: Expected corresponding JSX closing tag for 'div'.",
+    "app/page.tsx(385,9): error TS17002: duplicate diagnostic.",
+    "./components/hero.tsx(12,3): error TS2304: Cannot find name 'x'.",
+  ].join("\n");
+
+  assert.deepEqual(parseTypeScriptErrorLocations(diagnostics), [
+    { path: "app/page.tsx", line: 385, column: 9 },
+    { path: "components/hero.tsx", line: 12, column: 3 },
+  ]);
+  assert.deepEqual(parseTypeScriptErrorLocations(null), []);
+  const perFileDiagnostics = [
+    "app/page.tsx(385,9): error TS17002: Expected corresponding JSX closing tag for 'div'.",
+    "components/hero.tsx(12,3): error TS2304: Cannot find name 'x'.",
+  ].join("\n");
+  assert.equal(
+    typeScriptErrorTextFor(perFileDiagnostics, "app/page.tsx"),
+    "app/page.tsx(385,9): error TS17002: Expected corresponding JSX closing tag for 'div'.",
+  );
+  assert.equal(typeScriptErrorTextFor(perFileDiagnostics, "app/layout.tsx"), null);
 });
 
 test("represents skipped and unavailable checks without throwing", () => {

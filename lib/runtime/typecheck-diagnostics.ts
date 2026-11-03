@@ -1,5 +1,52 @@
 const MAX_DIAGNOSTIC_CHARACTERS = 6_000;
 const MAX_DIAGNOSTIC_LINES = 30;
+const TSC_ERROR_LOCATION = /^(.+?)\((\d+),(\d+)\): error TS\d+:/;
+
+type TypeScriptErrorLocation = {
+  path: string;
+  line: number;
+  column: number;
+};
+
+function normalizeDiagnosticPath(path: string) {
+  return path.trim().replace(/^\.\//, "");
+}
+
+/** Extracts one location per file/line from the summarized tsc diagnostics. */
+export function parseTypeScriptErrorLocations(
+  tscError: string | null,
+): TypeScriptErrorLocation[] {
+  if (!tscError) return [];
+  const seen = new Set<string>();
+  const locations: TypeScriptErrorLocation[] = [];
+  for (const raw of tscError.split(/\r?\n/)) {
+    const match = TSC_ERROR_LOCATION.exec(raw.trim());
+    if (!match) continue;
+    const path = normalizeDiagnosticPath(match[1]);
+    if (!path) continue;
+    const line = Number(match[2]);
+    const column = Number(match[3]);
+    if (!Number.isInteger(line) || !Number.isInteger(column)) continue;
+    const key = `${path}:${line}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    locations.push({ path, line, column });
+  }
+  return locations;
+}
+
+/** Keeps only the diagnostic lines that belong to one file. */
+export function typeScriptErrorTextFor(
+  tscError: string | null,
+  path: string,
+): string | null {
+  if (!tscError) return null;
+  const lines = tscError.split(/\r?\n/).filter((line) => {
+    const match = TSC_ERROR_LOCATION.exec(line.trim());
+    return match !== null && normalizeDiagnosticPath(match[1]) === path;
+  });
+  return lines.length > 0 ? lines.join("\n") : null;
+}
 
 type TypecheckExecution = {
   exitCode: number;

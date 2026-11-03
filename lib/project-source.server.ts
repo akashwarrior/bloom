@@ -166,19 +166,32 @@ export async function getRevisionBeforeMessage(
     : previousAssistant?.revisionId ?? null;
 }
 
-export async function getProjectRevisionFiles(
-  projectId: string,
-  revisionId?: string,
-) {
+const FILE_BLOB_SELECT = {
+  select: {
+    objectKey: true,
+    size: true,
+    mediaType: true,
+  },
+} as const;
+
+/** The requested revision, or the project's current one. Null when the project does not exist. */
+async function resolveProjectRevision(projectId: string, revisionId?: string) {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     select: { currentRevisionId: true },
   });
-  const targetRevisionId = revisionId ?? project?.currentRevisionId;
+  return project ? { targetRevisionId: revisionId ?? project.currentRevisionId } : null;
+}
 
-  if (!project) {
+export async function getProjectRevisionFiles(
+  projectId: string,
+  revisionId?: string,
+) {
+  const resolved = await resolveProjectRevision(projectId, revisionId);
+  if (!resolved) {
     throw new Error("Project not found");
   }
+  const { targetRevisionId } = resolved;
 
   const revision = targetRevisionId ? await prisma.projectRevision.findFirst({
     where: {
@@ -191,13 +204,7 @@ export async function getProjectRevisionFiles(
         orderBy: { path: "asc" },
         select: {
           path: true,
-          blob: {
-            select: {
-              objectKey: true,
-              size: true,
-              mediaType: true,
-            },
-          },
+          blob: FILE_BLOB_SELECT,
         },
       },
     },
@@ -223,13 +230,9 @@ export async function getProjectRevisionTree(
   projectId: string,
   revisionId?: string,
 ) {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    select: { currentRevisionId: true },
-  });
-  const targetRevisionId = revisionId ?? project?.currentRevisionId;
+  const targetRevisionId = (await resolveProjectRevision(projectId, revisionId))?.targetRevisionId;
 
-  if (!project || !targetRevisionId) {
+  if (!targetRevisionId) {
     throw new Error("Project revision not found");
   }
 
@@ -266,13 +269,9 @@ export async function getProjectRevisionFile(
   revisionId?: string,
 ) {
   const path = normalizeProjectPath(inputPath);
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    select: { currentRevisionId: true },
-  });
-  const targetRevisionId = revisionId ?? project?.currentRevisionId;
+  const targetRevisionId = (await resolveProjectRevision(projectId, revisionId))?.targetRevisionId;
 
-  if (!project || !targetRevisionId) {
+  if (!targetRevisionId) {
     throw new Error("Project revision not found");
   }
 
@@ -284,13 +283,7 @@ export async function getProjectRevisionFile(
     },
     select: {
       path: true,
-      blob: {
-        select: {
-          objectKey: true,
-          size: true,
-          mediaType: true,
-        },
-      },
+      blob: FILE_BLOB_SELECT,
     },
   });
 

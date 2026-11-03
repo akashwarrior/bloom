@@ -95,36 +95,11 @@ export async function exploreProjectFiles(
 }
 
 /**
- * Build a `next typegen` command. Running `next typegen` first generates
- * Next.js route type definitions and next-env.d.ts, so a subsequent
- * `tsc --noEmit` (run separately by the caller) validates route usage —
- * e.g. `@/app/page` imports and generated Link href types — without the
- * false "Cannot find module" errors that arise when route types are
- * missing.
- *
- * We intentionally do NOT scope tsc to changed files: tsc respects
- * tsconfig.json (paths, project references, include/exclude) only when run
- * over the whole project. Scoping it to individual files produces false
- * errors for modules resolved through tsconfig paths.
- *
- * Returns null when no type-checkable file changed (e.g. CSS-only or
- * JSON-only changes), signalling the caller to skip both typegen and tsc.
+ * Type checks run `next typegen` first so Next.js route type definitions and
+ * next-env.d.ts exist, then run `tsc --noEmit` over the whole project. Scoping
+ * tsc to individual files produces false errors for modules resolved through
+ * tsconfig paths.
  */
-function typegenCommand(changedPaths: string[]) {
-  const typecheckablePaths = changedPaths.filter((path) =>
-    /\.(?:[cm]?[jt]sx?)$/i.test(path),
-  );
-
-  if (typecheckablePaths.length === 0) return null;
-
-  return {
-    executable: "pnpm" as const,
-    args: ["exec", "next", "typegen"],
-    cwd: ".",
-    timeoutMs: 90_000,
-  };
-}
-
 const typeCheckCommand = {
   executable: "pnpm" as const,
   args: ["exec", "tsc", "--noEmit"],
@@ -137,13 +112,25 @@ async function runTypeCheck(
   changedPaths: string[],
   signal: AbortSignal,
 ) {
-  const typegen = typegenCommand(changedPaths);
-  if (!typegen) return skippedTypeScriptValidation();
+  const typecheckablePaths = changedPaths.filter((path) =>
+    /\.(?:[cm]?[jt]sx?)$/i.test(path),
+  );
 
+  if (typecheckablePaths.length === 0) return skippedTypeScriptValidation();
+  return runProjectTypeCheck(projectId, signal);
+}
+
+/** Runs typegen then a full `tsc --noEmit`, regardless of which paths changed. */
+async function runProjectTypeCheck(projectId: string, signal: AbortSignal) {
   try {
     const typegenResult = await container.runCommand(
       projectId,
-      typegen,
+      {
+        executable: "pnpm" as const,
+        args: ["exec", "next", "typegen"],
+        cwd: ".",
+        timeoutMs: 90_000,
+      },
       signal,
     );
     if (typegenResult.exitCode !== 0) {
@@ -159,6 +146,14 @@ async function runTypeCheck(
   } catch (error) {
     return unavailableTypeScriptValidation(error);
   }
+}
+
+/** Full-project typecheck for the finish gate. */
+export async function validateProjectTypes(
+  projectId: string,
+  signal?: AbortSignal,
+) {
+  return runProjectTypeCheck(projectId, signal ?? AbortSignal.timeout(300_000));
 }
 
 export async function applyProjectChanges(
@@ -214,19 +209,6 @@ export async function applyProjectChanges(
       AbortSignal.timeout(120_000),
     ).catch(() => undefined);
     throw error;
-  }
-}
-
-/** Full-project TypeScript validation, as run after file changes. */
-export async function validateProjectTypes(projectId: string, signal?: AbortSignal) {
-  try {
-    return await runTypeCheck(
-      projectId,
-      ["app/page.tsx"],
-      signal ?? AbortSignal.timeout(300_000),
-    );
-  } catch (error) {
-    return unavailableTypeScriptValidation(error);
   }
 }
 

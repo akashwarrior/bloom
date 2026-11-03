@@ -39,7 +39,7 @@ export const DESIGN_PROPS = [
 export type DesignProp = (typeof DESIGN_PROPS)[number];
 export type DesignEdits = Partial<Record<DesignProp, string>>;
 
-export type DesignToken = { name: string; value: string };
+type DesignToken = { name: string; value: string };
 
 export type DesignElement = {
   styles: Record<DesignProp, string>;

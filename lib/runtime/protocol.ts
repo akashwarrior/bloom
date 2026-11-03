@@ -3,10 +3,6 @@ export type RuntimeFile = {
   content: string;
 };
 
-export type RuntimeBinaryFile = RuntimeFile & {
-  encoding: "base64";
-};
-
 export const RUNTIME_EXECUTABLES = ["pnpm", "node"] as const;
 
 export type RuntimeCommandInput = {
@@ -44,5 +40,5 @@ export type RuntimeWorkspace = {
   projectId: string;
   revisionId: string | null;
   files: RuntimeFile[];
-  assets?: RuntimeBinaryFile[];
+  assets?: Array<RuntimeFile & { encoding?: "base64" }>;
 };
