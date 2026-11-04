@@ -39,7 +39,6 @@
   ],
   "exclude": [
     "node_modules",
-    "generated", // prisma generations
-    "templates", // source written into generated projects, compiled there
+    "generated" // prisma generations
   ]
 }
