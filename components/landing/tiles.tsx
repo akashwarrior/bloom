@@ -2,7 +2,7 @@ import { Check } from "lucide-react";
 import { BloomLogo } from "@/components/bloom-logo";
 import { EditorialCard, KineticCard, MidnightCard, NoirCard, OrganicCard, PopCard, SwissCard } from "./fan-cards";
 
-export type Site = {
+type Site = {
   id: string;
   name: string;
   kind: string;
@@ -22,7 +22,7 @@ export const SITES: Site[] = [
   { id: "relay", name: "Relay", kind: "Developer platform", direction: "Swiss precision", prompt: "Edge infrastructure for developers. Swiss, exact, no fluff.", bg: "#ececea", Card: SwissCard },
 ] as const;
 
-export function Cursor({ name, color, className }: { name: string; color: string; className?: string }) {
+function Cursor({ name, color, className }: { name: string; color: string; className?: string }) {
   return (
     <div className={`pointer-events-none absolute z-10 flex items-start gap-0.5 ${className}`}>
       <svg viewBox="0 0 16 16" className="size-[18px] drop-shadow-[0_2px_3px_rgba(0,0,0,0.2)]">
@@ -52,7 +52,7 @@ export function SiteTile({ site, prompt = false, cursor }: { site: Site; prompt?
   );
 }
 
-export function TypeTile() {
+function TypeTile() {
   return (
     <div className="relative flex h-full w-full flex-col justify-between bg-[#2f5bff] p-5 text-white">
       <div className="flex items-center justify-between rounded-[10px] bg-white/15 px-3 py-2 text-[12.5px] backdrop-blur">
@@ -79,7 +79,7 @@ export function TypeTile() {
   );
 }
 
-export function PaletteTile() {
+function PaletteTile() {
   const swatches = ["#F3F0E8", "#B5643C", "#6F8F6A", "#23271F"];
   return (
     <div className="relative flex h-full w-full flex-col justify-center gap-4 bg-[#ffd43b] p-5">
@@ -108,7 +108,7 @@ export function PaletteTile() {
   );
 }
 
-export function ChatTile() {
+function ChatTile() {
   return (
     <div className="relative flex h-full w-full flex-col justify-end gap-3 bg-[#f0461e] p-5">
       <p className="ml-auto max-w-[220px] rounded-[16px] rounded-br-[4px] bg-ink px-3.5 py-2.5 text-[13.5px] leading-snug text-white">
@@ -134,7 +134,7 @@ export function ChatTile() {
   );
 }
 
-export function LayoutTile() {
+function LayoutTile() {
   return (
     <div className="relative flex h-full w-full flex-col bg-[#19c37d] p-5">
       <div className="flex flex-1 flex-col gap-2 rounded-[12px] bg-white/95 p-3">

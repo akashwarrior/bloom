@@ -20,7 +20,7 @@ type AnimatedBackgroundChildProps = {
   onClick?: MouseEventHandler<HTMLElement>;
 };
 
-export type AnimatedBackgroundProps = {
+type AnimatedBackgroundProps = {
   children:
   | ReactElement<AnimatedBackgroundChildProps>
   | readonly ReactElement<AnimatedBackgroundChildProps>[];

@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { ProjectChat } from "@/components/project-chat";
 import { auth } from "@/lib/auth";
+import { normalizeReasoningPartsForDisplay } from "@/lib/chat-message";
 import prisma from "@/lib/prisma";
 
 type ProjectPageProps = {
@@ -46,7 +47,9 @@ async function getProjectMessages(
       ({
         id: message.id,
         role: message.role === "USER" ? "user" : "assistant",
-        parts: message.parts as ProjectChatMessage["parts"],
+        parts: normalizeReasoningPartsForDisplay(
+          message.parts as ProjectChatMessage["parts"],
+        ),
         ...(message.metadata
           ? { metadata: message.metadata as ProjectChatMessage["metadata"] }
           : {}),

@@ -4,10 +4,10 @@ import { BloomLogo } from "@/components/bloom-logo"
 
 export default function NotFound() {
   return (
-    <div className="force-light relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-background px-6 text-center text-foreground">
+    <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-background px-6 text-center text-foreground">
       <Nav />
 
-      <BloomLogo className="size-14 text-ink motion-safe:animate-[bloom-spin_30s_linear_infinite]" />
+      <BloomLogo className="size-14 text-ink motion-safe:animate-[spin_30s_linear_infinite]" />
       <p className="mt-10 font-mono text-[11.5px] uppercase tracking-[0.14em] text-ink/50">Error 404</p>
       <h1 className="mt-4 font-display text-[clamp(2.8rem,7vw,6rem)] font-medium leading-[0.92] tracking-[-0.05em]">
         This page never{" "}

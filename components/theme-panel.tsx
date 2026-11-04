@@ -2,16 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Loader2Icon, PaletteIcon, ShuffleIcon, Undo2Icon } from "lucide-react";
-import {
-  PRESET_BASE_COLORS,
-  PRESET_CHART_COLORS,
-  PRESET_FONT_HEADINGS,
-  PRESET_FONTS,
-  PRESET_ICON_LIBRARIES,
-  PRESET_RADII,
-  PRESET_STYLES,
-  PRESET_THEMES,
-} from "shadcn/preset";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -24,51 +14,78 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { chartColorsForBaseColor, compatibleShadcnTheme, randomShadcnTheme, shadcnFontFamily, themesForBaseColor, type ShadcnTheme } from "@/lib/design/shadcn-theme";
-
-const STYLE_NOTES: Record<string, string> = {
-  vega: "Clean, neutral, and familiar",
-  nova: "Reduced padding and margins",
-  maia: "Rounded, with generous spacing",
-  lyra: "Boxy and sharp. For mono fonts",
-  mira: "Made for compact interfaces",
-  luma: "Fluid, luminous, and soft",
-  sera: "Editorial and typographic",
-  rhea: "Like Luma but compact",
-};
-
-const SWATCHES: Record<string, string> = {
-  neutral: "#737373", stone: "#78716c", zinc: "#71717a", gray: "#6b7280",
-  mauve: "#79697b", olive: "#7c7c67", mist: "#67787c", taupe: "#7c6d67",
-  amber: "#f59e0b", blue: "#3b82f6", cyan: "#06b6d4", emerald: "#10b981",
-  fuchsia: "#d946ef", green: "#22c55e", indigo: "#6366f1", lime: "#84cc16",
-  orange: "#f97316", pink: "#ec4899", purple: "#a855f7", red: "#ef4444",
-  rose: "#f43f5e", sky: "#0ea5e9", teal: "#14b8a6", violet: "#8b5cf6", yellow: "#eab308",
-};
-
-const ICON_LIBRARIES: Record<string, string> = {
-  lucide: "Lucide",
-  hugeicons: "Hugeicons",
-  tabler: "Tabler Icons",
-  phosphor: "Phosphor Icons",
-  remixicon: "Remix Icon",
-};
-
-const title = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+import {
+  BASE_COLOR_OPTIONS,
+  FONT_OPTIONS,
+  HEADING_FONT_OPTIONS,
+  ICON_OPTIONS,
+  MENU_ACCENT_OPTIONS,
+  MENU_COLOR_OPTIONS,
+  MODE_OPTIONS,
+  RADIUS_OPTIONS,
+  STYLE_OPTIONS,
+  THEME_COLOR_OPTIONS,
+  THEME_FIELDS,
+  type ThemeSelection,
+} from "@/lib/design/theme-options";
+import { chartColorsForBaseColor, compatibleShadcnTheme, randomShadcnTheme, themesForBaseColor, type ShadcnTheme } from "@/lib/design/shadcn-theme";
 
 type Option = { value: string; label: string; note?: string; swatch?: string };
 
-const FIELDS: Array<{ key: keyof ShadcnTheme; label: string; options: Option[] }> = [
-  { key: "style", label: "Style", options: PRESET_STYLES.map((value) => ({ value, label: title(value), note: STYLE_NOTES[value] })) },
-  { key: "baseColor", label: "Base color", options: PRESET_BASE_COLORS.map((value) => ({ value, label: title(value), swatch: SWATCHES[value] })) },
-  { key: "theme", label: "Theme", options: PRESET_THEMES.map((value) => ({ value, label: title(value), swatch: SWATCHES[value] })) },
-  { key: "chartColor", label: "Chart color", options: PRESET_CHART_COLORS.map((value) => ({ value, label: title(value), swatch: SWATCHES[value] })) },
-  { key: "fontHeading", label: "Heading font", options: PRESET_FONT_HEADINGS.map((value) => ({ value, label: value === "inherit" ? "Same as body" : shadcnFontFamily(value) })) },
-  { key: "font", label: "Font", options: PRESET_FONTS.map((value) => ({ value, label: shadcnFontFamily(value) })) },
-  { key: "iconLibrary", label: "Icon library", options: PRESET_ICON_LIBRARIES.map((value) => ({ value, label: ICON_LIBRARIES[value] ?? title(value) })) },
-  { key: "radius", label: "Radius", options: PRESET_RADII.map((value) => ({ value, label: title(value) })) },
-  { key: "mode", label: "Mode", options: [{ value: "light", label: "Light" }, { value: "dark", label: "Dark" }] },
-];
+const OPTIONS: Record<keyof ThemeSelection, Option[]> = {
+  style: Object.entries(STYLE_OPTIONS).map(([value, option]) => ({
+    value,
+    label: option.label,
+    note: option.description,
+  })),
+  baseColor: Object.entries(BASE_COLOR_OPTIONS).map(([value, option]) => ({
+    value,
+    label: option.label,
+    note: option.temperature,
+    swatch: option.swatch,
+  })),
+  theme: Object.entries(THEME_COLOR_OPTIONS).map(([value, option]) => ({
+    value,
+    label: option.label,
+    swatch: option.swatch,
+  })),
+  chartColor: Object.entries(THEME_COLOR_OPTIONS).map(([value, option]) => ({
+    value,
+    label: option.label,
+    swatch: option.swatch,
+  })),
+  fontHeading: Object.entries(HEADING_FONT_OPTIONS).map(([value, option]) => ({
+    value,
+    label: option.label,
+  })),
+  font: Object.entries(FONT_OPTIONS).map(([value, option]) => ({
+    value,
+    label: option.label,
+  })),
+  iconLibrary: Object.entries(ICON_OPTIONS).map(([value, option]) => ({
+    value,
+    label: option.label,
+  })),
+  radius: Object.entries(RADIUS_OPTIONS).map(([value, option]) => ({
+    value,
+    label: option.label,
+    note: option.px === null ? undefined : `${option.px}px`,
+  })),
+  mode: MODE_OPTIONS.map((option) => ({ value: option.value, label: option.label })),
+  menuAccent: Object.entries(MENU_ACCENT_OPTIONS).map(([value, option]) => ({
+    value,
+    label: option.label,
+    note: option.note,
+  })),
+  menuColor: Object.entries(MENU_COLOR_OPTIONS).map(([value, option]) => ({
+    value,
+    label: option.label,
+    note: option.note,
+  })),
+};
+
+const FIELDS: Array<{ key: keyof ShadcnTheme; label: string; options: Option[] }> =
+  THEME_FIELDS.map(({ key, label }) => ({ key, label, options: OPTIONS[key] }));
 
 function Swatch({ color }: { color?: string }) {
   if (!color) return null;
@@ -79,7 +96,6 @@ export function ThemePanel({ projectId }: { projectId: string }) {
   const [saved, setSaved] = useState<ShadcnTheme | null>(null);
   const [draft, setDraft] = useState<ShadcnTheme | null>(null);
   const [hasDesignSystem, setHasDesignSystem] = useState(false);
-  const [editable, setEditable] = useState(true);
   const [applying, setApplying] = useState(false);
 
   useEffect(() => {
@@ -88,13 +104,12 @@ export function ThemePanel({ projectId }: { projectId: string }) {
       fetch(`/api/projects/${projectId}/theme`, { signal: controller.signal })
         .then(async (response) => {
           if (!response.ok) throw new Error("Failed to load the theme");
-          return response.json() as Promise<{ theme: ShadcnTheme; hasDesignSystem: boolean; editable: boolean }>;
+          return response.json() as Promise<{ theme: ShadcnTheme; hasDesignSystem: boolean }>;
         })
         .then((result) => {
           setSaved(result.theme);
           setDraft(result.theme);
           setHasDesignSystem(result.hasDesignSystem);
-          setEditable(result.editable);
         })
         .catch((error: unknown) => {
           if (!controller.signal.aborted) toast.error(error instanceof Error ? error.message : "Failed to load the theme");
@@ -159,7 +174,7 @@ export function ThemePanel({ projectId }: { projectId: string }) {
                 <Select
                   modal={false}
                   value={draft[key]}
-                  disabled={applying || !editable}
+                  disabled={applying}
                   onValueChange={(value) => setDraft(compatibleShadcnTheme({ ...draft, [key]: value } as ShadcnTheme).theme)}
                 >
                   <SelectTrigger className="h-9 w-full text-foreground">
@@ -184,11 +199,7 @@ export function ThemePanel({ projectId }: { projectId: string }) {
             );
           })}
         </div>
-        {!editable ? (
-          <p className="pb-4 text-xs text-muted-foreground">
-            This site was designed before theme editing existed, so its theme can&apos;t be changed here. Generate it again to make the theme editable.
-          </p>
-        ) : !hasDesignSystem ? (
+        {!hasDesignSystem ? (
           <p className="pb-4 text-xs text-muted-foreground">
             This project has no Bloom design system yet, so the preset is applied with plain shadcn apply.
           </p>
@@ -199,7 +210,7 @@ export function ThemePanel({ projectId }: { projectId: string }) {
         <Button
           type="button"
           variant="ghost"
-          disabled={applying || !editable}
+          disabled={applying}
           onClick={() => setDraft({ ...randomShadcnTheme(), mode: draft.mode })}
         >
           <ShuffleIcon />
@@ -209,7 +220,7 @@ export function ThemePanel({ projectId }: { projectId: string }) {
           <Undo2Icon />
           Reset
         </Button>
-        <Button type="button" className="ml-auto" disabled={applying || !dirty || !editable} onClick={() => void apply()}>
+        <Button type="button" className="ml-auto" disabled={applying || !dirty} onClick={() => void apply()}>
           {applying ? <Loader2Icon className="animate-spin" /> : null}
           {applying ? "Applying, about a minute" : "Apply theme"}
         </Button>
