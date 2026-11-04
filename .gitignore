@@ -37,6 +37,12 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# benchmark worker copies and transient output
+/benchmark/.runs/
+/benchmark-results/**/logs/
+/benchmark-results/**/source.tar.gz
+/benchmark-results/summary-*.json
+
 # vercel
 .vercel
 
