@@ -25,7 +25,7 @@ import {
   supersedeVisualReviewImages,
 } from "@/lib/review-image-context";
 
-export const AGENT_CONTEXT_TOKEN_LIMIT = 300_000;
+export const AGENT_CONTEXT_TOKEN_LIMIT = 400_000;
 
 const IMAGE_TOKEN_ALLOWANCE = 2_048;
 const FILE_TOKEN_ALLOWANCE = 4_096;
@@ -36,7 +36,7 @@ const PERSISTED_VALUE_TYPE = "__bloomAgentContextValue";
 const EXACT_USER_MESSAGES_START = "<exact-user-messages>";
 const EXACT_USER_MESSAGES_END = "</exact-user-messages>";
 
-export type AgentContextData = {
+type AgentContextData = {
   messages: ModelMessage[];
   retainedAssetIds: string[];
   sourceTokenCount: number;
@@ -51,7 +51,7 @@ export type StoredContextCheckpoint = {
   checkpointTokenCount: number;
 };
 
-export type PersistedContextCheckpointData = Omit<
+type PersistedContextCheckpointData = Omit<
   StoredContextCheckpoint,
   "projectId" | "throughMessageId" | "checkpointMessages"
 > & {
@@ -134,16 +134,11 @@ function serializableContextValue(
           key !== "providerOptions" &&
           key !== "providerMetadata",
       )
-      .map(([key, item]) => [
-        key,
-        key === "captureId" || key === "capture_id"
-          ? "[ephemeral webScrape capture ID expired; re-scrape the recorded URL in the current run]"
-          : serializableContextValue(item, seen),
-      ]),
+      .map(([key, item]) => [key, serializableContextValue(item, seen)]),
   );
 }
 
-export function serializeAgentContextValue(value: unknown) {
+function serializeAgentContextValue(value: unknown) {
   return JSON.stringify(serializableContextValue(value, new WeakSet()), null, 2);
 }
 
@@ -193,7 +188,7 @@ export function estimateModelMessageTokens(messages: ModelMessage[]) {
   );
 }
 
-export function collectModelMessageAssetIds(messages: ModelMessage[]) {
+function collectModelMessageAssetIds(messages: ModelMessage[]) {
   const ids = new Set<string>();
   visitContextValues(messages, (value) => {
     if (typeof value === "string") {
@@ -286,7 +281,7 @@ function persistedContextValue(
   return Object.fromEntries(entries);
 }
 
-export function serializeModelMessagesForStorage(messages: ModelMessage[]) {
+function serializeModelMessagesForStorage(messages: ModelMessage[]) {
   const encoded = persistedContextValue(messages, new WeakSet());
   return JSON.parse(JSON.stringify(encoded)) as Prisma.InputJsonValue;
 }
@@ -617,12 +612,16 @@ function extractVisualAnchorHint(messages: ModelMessage[]) {
   const publicScrapes = operations.filter((operation) => {
     if (operation.toolName !== "webScrape") return false;
     const output = operation.output;
-    if (!isRecord(output)) return false;
-    return output.targetKind === "public" && typeof output.url === "string";
+    return isRecord(output) &&
+      typeof output.url === "string" &&
+      "fonts" in output &&
+      "colors" in output;
   });
   if (publicScrapes.length === 0) return null;
   const anchor = publicScrapes[0];
   const output = anchor.output as Record<string, unknown>;
+  const input = isRecord(anchor.input) ? anchor.input : null;
+  const theme = typeof input?.theme === "string" ? input.theme : null;
   const supporting = publicScrapes
     .slice(1, 3)
     .map((operation) => {
@@ -631,7 +630,7 @@ function extractVisualAnchorHint(messages: ModelMessage[]) {
     })
     .filter(Boolean);
   return [
-    `Anchor (first successful public scrape, keeps its composition/sections/theme): ${String(output.url)}${typeof output.theme === "string" ? ` theme:${output.theme}` : ""}${typeof output.title === "string" && output.title ? ` title:${String(output.title).slice(0, 120)}` : ""}`,
+    `Anchor (first successful public scrape, keeps its composition/sections/theme): ${String(output.url)}${theme ? ` theme:${theme}` : ""}`,
     supporting.length > 0
       ? `Supporting refs (one trait each, do not spread their effects): ${supporting.join(", ")}`
       : null,
@@ -758,7 +757,7 @@ ACTIVE TASK RESOLVED FROM CANONICAL USER TURNS
 ${"Continue the latest explicit user task."}
 
 WEB SCRAPE EVIDENCE
-Public BUILD scrape outputs retain screenshot evidence and stable same-origin captured font paths, but no reusable scraped image or SVG paths. Generate required media from precise descriptions based on the screenshots. Re-scrape a public URL when fresh visual evidence is needed; do not assume a prior capture's screenshots remain current.
+Public BUILD scrape outputs retain screenshot evidence and measured design DNA, but no reusable scraped image, SVG or font files. Generate required media from precise descriptions based on the screenshots. Re-scrape a public URL when fresh visual evidence is needed; do not assume a prior capture's screenshots remain current.
 
 EXACT USER MESSAGES
 ${EXACT_USER_MESSAGES_START}
@@ -930,7 +929,7 @@ export async function compactAgentContext({
 
   const generateCompactionFor = async (requestText: string) => {
     const { output } = await generateText({
-      ...getAgentModelOptions(logger),
+      ...getAgentModelOptions(),
       abortSignal: signal,
       output: Output.object({
         schema: compactionOutputSchema,
@@ -1018,7 +1017,7 @@ The formatted semantic sections should contain at least ${minimumDetailCharacter
     });
 
     const { output: refined } = await generateText({
-      ...getAgentModelOptions(logger),
+      ...getAgentModelOptions(),
       abortSignal: signal,
       output: Output.object({
         schema: compactionOutputSchema,

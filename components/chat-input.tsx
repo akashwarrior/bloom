@@ -587,7 +587,7 @@ const ChatInputToolbar = memo(function ChatInputToolbar({
   );
 });
 
-export type ChatInputProps = {
+type ChatInputProps = {
   className?: string;
   busy?: boolean;
   editingMessage?: EditingMessage | null;

@@ -16,16 +16,6 @@ export const FILE_STATUS = {
   ERROR: "error",
 } as const;
 
-const legacyFileEntrySchema = z.object({
-  path: z.string(),
-  error: z.string().optional(),
-});
-
-const fileActionSchema = z.object({
-  status: z.enum(STATUS),
-  files: legacyFileEntrySchema.array(),
-});
-
 const changedFileEntrySchema = z.object({
   path: z.string(),
   status: z.enum(FILE_STATUS),
@@ -41,19 +31,10 @@ const fileChangesSchema = z.object({
 });
 
 export const dataPartSchemas = {
-  "design-progress": z.object({
-    stage: z.string().min(1).max(80),
-    label: z.string().min(1).max(200),
-    status: z.enum([STATUS.LOADING, STATUS.COMPLETE, STATUS.ERROR]),
-    detail: z.string().max(500).optional(),
-  }),
   "context-compaction": z.object({
     sourceTokenCount: z.number().int().nonnegative(),
     compactedTokenCount: z.number().int().nonnegative(),
   }),
-  "create-files": fileActionSchema,
-  "read-file": fileActionSchema,
-  "edit-file": fileActionSchema,
   "file-changes": fileChangesSchema,
   "shell": z.object({
     commandId: z.string().optional(),

@@ -19,13 +19,12 @@ import {
 import z from "zod/v4";
 
 import { BuildSession } from "@/ai/build-session";
-import { getAgentModelOptions, getUtilityModelOptions } from "@/ai/config";
+import { getAgentModelOptions } from "@/ai/config";
 import { dataPartSchemas, type DataPart } from "@/ai/message/data-part";
 import { metadataSchema, type Metadata } from "@/ai/message/metadata";
 import { buildSystemPrompt } from "@/ai/system-prompt";
 import { tools, type ToolSet } from "@/ai/tools";
 import { validateUserInputResponse } from "@/ai/tools/request-user-input";
-import { classifyWorkflow } from "@/ai/workflow";
 import { Prisma } from "@/generated/prisma/client";
 import { AssetStatus, ChatMessageRole } from "@/generated/prisma/enums";
 import {
@@ -44,11 +43,15 @@ import {
   type ResolvedMessageAssets,
 } from "@/lib/chat-assets.server";
 import {
+  filterEmptyReasoningPartsForStorage,
+  normalizeReasoningChunks,
+} from "@/lib/chat-message";
+import {
   checkpointCanSeedGeneration,
   shouldPersistContextCheckpoint,
   type MessageBoundary,
 } from "@/lib/context-checkpoint";
-import { DESIGN_SYSTEM_MARKER } from "@/lib/design/design-system";
+import { readDesignState } from "@/lib/design/write-design-system.server";
 import { describeSelections } from "@/lib/element-selection";
 import prisma from "@/lib/prisma";
 import {
@@ -529,7 +532,6 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   let baseFiles: Array<{ path: string; content: string }>;
   let regenerationCheckedOut = false;
   let latestUserText = "";
-  let latestUserHasAttachments = false;
 
   const rollbackRegeneration = async () => {
     if (!regeneratedMessage || !regenerationCheckedOut) return;
@@ -608,7 +610,6 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         .flatMap((part) => (part.type === "text" ? [part.text] : []))
         .join("\n")
       : "";
-    latestUserHasAttachments = requiredAssetIds.length > 0;
     const resolvedMessageAssets = await resolveMessageAssetsForModel(
       id,
       canonicalMessages,
@@ -670,29 +671,29 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         return (error instanceof Error ? error.message : String(error));
       },
       execute: async ({ writer }) => {
-        const freshProject = baseRevisionId === null || baseFiles.some((file) => file.path === "app/page.tsx" && file.content.includes("Your new project is ready"));
+        const freshProject = baseRevisionId === null;
 
-        const workflow = await classifyWorkflow({
-          text: latestUserText,
-          hasAttachments: latestUserHasAttachments,
-          freshProject,
-          mode,
-          logger,
-          signal: request.signal,
-        });
-
-        const session = new BuildSession(workflow.workflow, workflow.cloneTarget, workflow.reference);
+        // The main agent sees the request and the project context; it decides
+        // whether to design, redesign, edit, or answer. BUILD mode only makes
+        // the design tools available.
+        const session = new BuildSession({ requiresDesign: freshProject });
 
         session.requestText = latestUserText;
-        session.designSystemPresent = baseFiles.some(
-          (file) => file.path === "app/globals.css" && file.content.includes(DESIGN_SYSTEM_MARKER),
-        );
-        const maxSteps = session.gated ? 80 : mode === "BUILD" ? 50 : 30;
+
+        // Edits keep the existing design contract. A redesign replaces it when
+        // the agent calls designSite.
+        if (mode === "BUILD") {
+          const designState = readDesignState(baseFiles);
+          if (designState) {
+            session.appliedDesign = { theme: designState.theme };
+          }
+        }
+
+        const maxSteps = mode === "BUILD" ? 80 : 30;
 
         const agentTools = tools({
           projectId: id,
           writer,
-          mode,
           signal: request.signal,
           logger,
           session,
@@ -728,19 +729,21 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         const systemPrompt = buildSystemPrompt(mode);
         await logger.write("generation.started", {
           mode,
-          workflow: session.workflow,
-          cloneTarget: session.cloneTarget,
           freshProject,
           systemPrompt,
           modelMessages,
         });
 
         const result = streamText({
-          ...getAgentModelOptions(logger),
+          ...getAgentModelOptions(),
           instructions: systemPrompt,
           messages: modelMessages,
           abortSignal: request.signal,
           tools: agentTools,
+          activeTools:
+            mode === "BUILD"
+              ? (Object.keys(agentTools) as Array<keyof typeof agentTools>)
+              : [],
           stopWhen: stepCountIs(maxSteps),
           onError: async ({ error }) => {
             generationFailed = true;
@@ -831,8 +834,6 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
             currentStepInputMessages = preparedMessages;
             finalAgentModelMessages = preparedMessages;
 
-            session.stepNumber = steps.length;
-
             return preparedMessages === stepMessages ? {} : { messages: preparedMessages }
           },
           repairToolCall: async ({ toolCall, inputSchema, error }) => {
@@ -884,7 +885,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
             try {
               const { output } = await generateText({
-                ...getUtilityModelOptions(logger),
+                ...getAgentModelOptions(),
                 abortSignal: request.signal,
                 output: Output.object({
                   schema: jsonSchema(schema),
@@ -959,31 +960,35 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
               },
             });
           },
-          onToolExecutionStart: (event) =>
-            logger.write("tool.execution_started", {
+          onToolExecutionStart: (event) => {
+            if (!event) return;
+            return logger.write("tool.execution_started", {
               callId: event.callId,
               toolCallId: event.toolCall.toolCallId,
               toolName: event.toolCall.toolName,
               input: event.toolCall.input,
-            }),
+            });
+          },
           onToolExecutionEnd: (event) => {
+            if (!event) return;
             const base = {
               callId: event.callId,
               toolCallId: event.toolCall.toolCallId,
               toolName: event.toolCall.toolName,
               durationMs: event.toolExecutionMs,
             };
-            if (event.toolOutput.type === "tool-result") {
+            const output = event.toolOutput;
+            if (output?.type === "tool-result") {
               return logger.write("tool.execution_finished", {
                 ...base,
                 status: "success",
-                output: event.toolOutput.output,
+                output: "output" in output ? output.output : undefined,
               });
             }
             return logger.write("tool.execution_finished", {
               ...base,
               status: "error",
-              error: event.toolOutput.error,
+              error: output && "error" in output ? output.error : output,
             });
           },
         });
@@ -1118,7 +1123,9 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
                 id: responseMessage.id,
                 role: ChatMessageRole.ASSISTANT,
                 parts:
-                  responseMessage.parts as unknown as Prisma.InputJsonValue,
+                  filterEmptyReasoningPartsForStorage(
+                    responseMessage.parts,
+                  ) as unknown as Prisma.InputJsonValue,
                 metadata:
                   responseMessage.metadata as Prisma.InputJsonValue,
               },
@@ -1170,6 +1177,6 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         }
         await logger.flush();
       },
-    }),
+    }).pipeThrough(normalizeReasoningChunks()),
   });
 }

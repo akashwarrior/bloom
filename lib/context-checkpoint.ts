@@ -3,7 +3,7 @@ export type MessageBoundary = {
   createdAt: Date;
 };
 
-export function messageComesBefore(
+function messageComesBefore(
   left: MessageBoundary,
   right: MessageBoundary,
 ) {

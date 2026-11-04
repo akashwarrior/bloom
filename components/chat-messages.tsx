@@ -57,11 +57,6 @@ import { Reasoning, ReasoningContent, ReasoningTrigger } from "./resoning";
 type ChatMessage = UIMessage<Metadata, DataPart, ToolSet>;
 type ChatMessagePart = ChatMessage["parts"][number];
 type FilePart = Extract<ChatMessagePart, FileUIPart>;
-type FileActionType =
-  | "data-read-file"
-  | "data-create-files"
-  | "data-edit-file"
-  | "data-file-changes";
 type ToolActivityPart = Extract<
   ChatMessagePart,
   {
@@ -73,11 +68,7 @@ type ToolActivityPart = Extract<
     | "tool-listFiles"
     | "tool-searchCode"
     | "tool-readFiles"
-    | "tool-submitDesignBrief"
-    | "tool-submitDesignStudy"
-    | "tool-chooseInspiration"
-    | "tool-finishBuild"
-    | "tool-toolInputError";
+    | "tool-designSite";
   }
 >;
 type UserInputPart = Extract<
@@ -98,34 +89,14 @@ type ChatMessagesProps = {
   ) => void | PromiseLike<void>;
 };
 
-function getFileActionLabel(
-  type: FileActionType,
-  state: "loading" | "complete" | "error",
-) {
+function getFileActionLabel(state: "loading" | "complete" | "error") {
   const labels = {
-    "data-create-files": {
-      loading: "Creating",
-      complete: "Created",
-      error: "Failed to create",
-    },
-    "data-read-file": {
-      loading: "Reading",
-      complete: "Read",
-      error: "Failed to read",
-    },
-    "data-edit-file": {
-      loading: "Editing",
-      complete: "Edited",
-      error: "Failed to edit",
-    },
-    "data-file-changes": {
-      loading: "Applying",
-      complete: "Saved",
-      error: "Failed to apply",
-    },
+    loading: "Applying",
+    complete: "Saved",
+    error: "Failed to apply",
   } as const;
 
-  return labels[type][state];
+  return labels[state];
 }
 
 function isToolActivityPart(part: ChatMessagePart): part is ToolActivityPart {
@@ -137,10 +108,7 @@ function isToolActivityPart(part: ChatMessagePart): part is ToolActivityPart {
     part.type === "tool-readFiles" ||
     part.type === "tool-webSearch" ||
     part.type === "tool-webScrape" ||
-    part.type === "tool-submitDesignBrief" ||
-    part.type === "tool-submitDesignStudy" ||
-    part.type === "tool-chooseInspiration" ||
-    part.type === "tool-finishBuild"
+    part.type === "tool-designSite"
   );
 }
 
@@ -151,8 +119,6 @@ function getToolFailureMessage(part: ToolActivityPart) {
   if (
     typeof output !== "object" ||
     output === null ||
-    !("status" in output) ||
-    output.status !== "error" ||
     !("error" in output) ||
     typeof output.error !== "object" ||
     output.error === null ||
@@ -170,13 +136,36 @@ function getToolActivityLabel(
   state: "loading" | "complete" | "error",
 ) {
   if (part.type === "tool-generateAsset") {
-    const role = part.input?.role;
-    const subject = typeof role === "string" ? role : "website asset";
-    return state === "loading"
-      ? `Generating ${subject}`
-      : state === "complete"
-        ? `Generated ${subject}`
-        : `Generation of ${subject} failed`;
+    const assets = Array.isArray(part.input?.assets) ? part.input.assets : [];
+    const total = assets.length;
+    const single = total === 1 && typeof assets[0]?.name === "string"
+      ? assets[0].name
+      : null;
+    const subject = total > 1 ? `${total} assets` : single ?? "website assets";
+
+    if (state === "loading") return `Generating ${subject}`;
+
+    const output =
+      part.state === "output-available" && !("error" in part.output)
+        ? part.output
+        : null;
+    if (!output) return `Generation of ${subject} failed`;
+
+    const results = output.assets;
+    if (results.length === 0) {
+      return state === "error" ? `Generation of ${subject} failed` : `Generated ${subject}`;
+    }
+
+    const failed = results.filter((asset) => asset.status === "error").length;
+    const succeeded = results.length - failed;
+    const resultSubject =
+      results.length > 1
+        ? `${succeeded} of ${results.length} assets`
+        : results[0]?.name ?? single ?? "website asset";
+
+    return failed > 0 && succeeded === 0
+      ? `Failed to generate ${subject}`
+      : `Generated ${resultSubject}`;
   }
 
   if (part.type === "tool-searchCode") {
@@ -201,14 +190,11 @@ function getToolActivityLabel(
 
   if (part.type === "tool-webScrape") {
     const target = part.input?.url || "the current page";
-    const screenshots = Boolean(part.input?.include_screenshots);
     const preview = target.startsWith("/");
     return state === "loading"
       ? preview
         ? `Capturing and reviewing ${target}`
-        : screenshots
-          ? `Scraping and capturing ${target}`
-          : `Scraping ${target}`
+        : `Scraping and capturing ${target}`
       : state === "complete"
         ? `Scraped ${target}`
         : `Web scrape of ${target} failed`;
@@ -224,43 +210,14 @@ function getToolActivityLabel(
         : "Web search failed";
   }
 
-  if (part.type === "tool-submitDesignStudy") {
-    const rejected = part.state === "output-available" && part.output.status === "rejected";
-    return state === "loading"
-      ? "Connecting reference evidence to the design"
-      : state === "complete"
-        ? rejected ? "Revising the reference study" : "Established the design concept"
-        : "Reference study failed";
-  }
-
-  if (part.type === "tool-submitDesignBrief") {
-    const brand = part.input?.brand?.name;
-    const subject = typeof brand === "string" ? `design system for ${brand}` : "design system";
+  if (part.type === "tool-designSite") {
     const output: unknown = part.state === "output-available" ? part.output : null;
-    const rejected = typeof output === "object" && output !== null && "status" in output && output.status === "rejected";
+    const failed = typeof output === "object" && output !== null && "status" in output && output.status === "error";
     return state === "loading"
-      ? `Locking the ${subject}`
+      ? "Designing the site"
       : state === "complete"
-        ? rejected ? `Revising the ${subject}` : `Locked the ${subject}`
-        : `Design brief failed`;
-  }
-
-  if (part.type === "tool-chooseInspiration") {
-    return state === "loading"
-      ? "Choosing frames from the design library"
-      : state === "complete"
-        ? "Chose frames from the design library"
-        : "Design library failed";
-  }
-
-  if (part.type === "tool-finishBuild") {
-    const output: unknown = part.state === "output-available" ? part.output : null;
-    const status = typeof output === "object" && output !== null && "status" in output ? output.status : null;
-    return state === "loading"
-      ? "Checking the build against the design"
-      : state === "complete"
-        ? status === "passed" ? "Design checks passed" : "Design checks found gaps"
-        : "Design check failed";
+        ? failed ? "Site design failed" : "Designed the site"
+        : "Site design failed";
   }
 
   const labels = {
@@ -333,6 +290,51 @@ const MessageAttachment = memo(function MessageAttachment({
         }
       />
     </Attachment>
+  );
+});
+
+type GeneratedAssetImage = {
+  name: string;
+  url: string;
+};
+
+const GeneratedAssetGroup = memo(function GeneratedAssetGroup({
+  assets,
+}: {
+  assets: GeneratedAssetImage[];
+}) {
+  return (
+    <AttachmentGroup className="max-w-full gap-2">
+      {assets.map((asset) => (
+        <Attachment key={asset.name} orientation="vertical">
+          <AttachmentMedia variant="image">
+            <Image
+              src={asset.url}
+              alt={asset.name}
+              fill
+              unoptimized
+              sizes="32px"
+              className="size-full object-cover"
+            />
+          </AttachmentMedia>
+
+          <AttachmentContent>
+            <AttachmentTitle>{asset.name}</AttachmentTitle>
+          </AttachmentContent>
+
+          <AttachmentTrigger
+            render={
+              <a
+                href={asset.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Open ${asset.name}`}
+              />
+            }
+          />
+        </Attachment>
+      ))}
+    </AttachmentGroup>
   );
 });
 
@@ -636,39 +638,6 @@ const AssistantMessagePart = memo(function AssistantMessagePart({
     );
   }
 
-  if (part.type === "data-design-progress") {
-    const loading = part.data.status === STATUS.LOADING;
-    const complete = part.data.status === STATUS.COMPLETE;
-    return (
-      <Marker role="status">
-        <MarkerIcon className="grid size-4 place-items-center">
-          {loading ? (
-            <Loader size={14} className="text-bloom" />
-          ) : complete ? (
-            <CircleIcon className="size-2 fill-current" />
-          ) : (
-            <AlertOctagonIcon className="text-destructive" />
-          )}
-        </MarkerIcon>
-        <MarkerContent
-          className={cn(
-            loading && "shimmer shimmer-color-bloom",
-            !loading && !complete && "text-destructive",
-          )}
-        >
-          <span className="flex min-w-0 flex-col">
-            <span>{part.data.label}</span>
-            {part.data.detail && (
-              <span className="text-xs text-muted-foreground">
-                {part.data.detail}
-              </span>
-            )}
-          </span>
-        </MarkerContent>
-      </Marker>
-    );
-  }
-
   if (part.type === "data-context-compaction") {
     return (
       <Marker variant="separator">
@@ -692,34 +661,49 @@ const AssistantMessagePart = memo(function AssistantMessagePart({
     part.state === "output-available" &&
     !("error" in part.output)
   ) {
-    const output = part.output;
+    const assets = part.output.assets;
+    const successful = assets.flatMap((asset) =>
+      asset.status === "success"
+        ? [{ name: asset.name, url: asset.url }]
+        : [],
+    );
+    const failed = assets.flatMap((asset) =>
+      asset.status === "error"
+        ? [{ name: asset.name, message: asset.error.message }]
+        : [],
+    );
+    const state = successful.length > 0 ? "complete" : "error";
+
     return (
       <div className="my-1.5 flex w-full flex-col gap-2 overflow-hidden">
         <Marker role="status">
           <MarkerIcon className="grid size-4 place-items-center">
-            <CircleIcon className="size-2 fill-current" />
+            {state === "complete" ? (
+              <CircleIcon className="size-2 fill-current" />
+            ) : (
+              <AlertOctagonIcon className="text-destructive" />
+            )}
           </MarkerIcon>
-          <MarkerContent>{getToolActivityLabel(part, "complete")}</MarkerContent>
+          <MarkerContent className={cn(state === "error" && "text-destructive")}>
+            {getToolActivityLabel(part, state)}
+          </MarkerContent>
         </Marker>
-        <a
-          href={output.preview.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ml-5 block max-w-xl overflow-hidden rounded-xl border bg-muted transition-opacity hover:opacity-90"
-        >
-          <Image
-            src={output.preview.url}
-            alt={`Generated ${part.input?.role || output.filename}`}
-            width={960}
-            height={600}
-            unoptimized
-            className="max-h-96 w-full object-contain"
-          />
-          <span className="block border-t px-2 py-1 text-xs text-muted-foreground">
-            {output.filename} · {output.kind}
-            {output.cached ? " · reused" : ""}
-          </span>
-        </a>
+        {successful.length > 0 && (
+          <GeneratedAssetGroup assets={successful} />
+        )}
+        {failed.map((asset) => (
+          <Marker key={asset.name} role="status">
+            <MarkerIcon className="grid size-4 place-items-center">
+              <AlertOctagonIcon className="size-3.5 text-destructive" />
+            </MarkerIcon>
+            <MarkerContent className="text-destructive">
+              <span className="flex min-w-0 flex-col">
+                <span>{asset.name} failed</span>
+                <span className="text-xs">{asset.message}</span>
+              </span>
+            </MarkerContent>
+          </Marker>
+        ))}
       </div>
     );
   }
@@ -808,22 +792,14 @@ const AssistantMessagePart = memo(function AssistantMessagePart({
     );
   }
 
-  if (
-    part.type === "data-read-file" ||
-    part.type === "data-create-files" ||
-    part.type === "data-edit-file" ||
-    part.type === "data-file-changes"
-  ) {
+  if (part.type === "data-file-changes") {
     const loading = part.data.status === STATUS.LOADING;
     const complete = part.data.status === STATUS.COMPLETE;
     const state = loading ? "loading" : complete ? "complete" : "error";
-    const action = getFileActionLabel(part.type, state);
+    const action = getFileActionLabel(state);
     const fileCount = part.data.files.length;
     const singleFile = fileCount === 1 ? part.data.files[0]?.path : null;
-    const summary =
-      part.type === "data-file-changes" ? part.data.summary : undefined;
-    const warning =
-      part.type === "data-file-changes" ? part.data.warning : undefined;
+    const { summary, warning } = part.data;
 
     return (
       <Marker role="status">
@@ -1086,7 +1062,7 @@ export const ChatMessages = memo(function ChatMessages({
       <div className="scrollbar-thin scrollbar-gutter-stable flex size-full min-h-0 flex-col-reverse overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4">
-            <BloomLogo className="size-10 text-foreground motion-safe:animate-[bloom-spin_24s_linear_infinite]" />
+            <BloomLogo className="size-10 text-foreground motion-safe:animate-[spin_24s_linear_infinite]" />
             <p className="max-w-2/3 text-center text-sm text-muted-foreground">
               Describe what you want Bloom to create or change.
             </p>

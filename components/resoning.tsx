@@ -24,7 +24,7 @@ function useReasoningContext() {
   return context
 }
 
-export type ReasoningProps = {
+type ReasoningProps = {
   children: React.ReactNode
   className?: string
   isStreaming?: boolean
@@ -54,7 +54,7 @@ function Reasoning({
   )
 }
 
-export type ReasoningTriggerProps = {
+type ReasoningTriggerProps = {
   children: React.ReactNode
   className?: string
 } & React.HTMLAttributes<HTMLButtonElement>
@@ -87,7 +87,7 @@ function ReasoningTrigger({
   )
 }
 
-export type ReasoningContentProps = {
+type ReasoningContentProps = {
   children: string;
   className?: string;
   contentClassName?: string
