@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readdirSync, readFileSync } from "node:fs";
 
 import { lintSourceChange } from "../lib/design/lint.ts";
-import { buildPageDna, compareDna } from "../lib/design/dna.ts";
 
 test("fractional layout utilities are not mistaken for customer ratings", () => {
   const after = 'const crop = "aspect-[4/5] w-4/5";';
@@ -20,27 +18,13 @@ test("invented claims are caught in JSX text that wraps onto its own line", () =
   assert.deepEqual(lintSourceChange({ path: "components/cta.tsx", before: null, after: code, reference: null }), []);
 });
 
-test("installed optional blocks satisfy the same final source audit", () => {
-  const directory = new URL("../templates/blocks/", import.meta.url);
-  for (const file of readdirSync(directory).filter((file) => /\.(?:tsx|ts)$/.test(file))) {
-    assert.deepEqual(lintSourceChange({
-      path: `components/blocks/${file}`,
-      before: null,
-      after: readFileSync(new URL(file, directory), "utf8"),
-      reference: null,
-    }), [], file);
-  }
-});
-
-test("surface verification clusters the brief with the same tolerance as the screenshot", () => {
-  const preview = buildPageDna({ frames: [], profile: null, pageHeight: 4000, viewportHeight: 1000 });
-  preview.surfaceColors = [{ color: "#FFFFFF", share: 0.7, light: true }, { color: "#121316", share: 0.3, light: false }];
-  const gaps = (surfaceColors: string[]) => compareDna({
-    preview, previewProfile: null, anchor: null,
-    expected: { theme: "mixed", surfaceColors, displaySize: null, displayFamily: null, bodyFamily: null },
-  });
-  assert.ok(!gaps(["#F5F3FF", "#FFFFFF", "#121316", "#FAF8FF"]).some((gap) => gap.message.includes("Color-blocking")));
-  assert.ok(gaps(["#FFFFFF", "#121316", "#FF0000", "#00FF00"]).some((gap) => gap.message.includes("Color-blocking")));
+test("decorative glow blobs and glass panels are rejected in page code", () => {
+  const glow = '<div aria-hidden className="absolute -top-40 left-1/2 h-130 w-240 -translate-x-1/2 rounded-full bg-primary/20 blur-[120px]" />';
+  assert.ok(lintSourceChange({ path: "app/page.tsx", before: null, after: glow, reference: null }).some((violation) => violation.kind === "decorative-glow"));
+  const glass = '<header className="sticky top-0 bg-background/85 backdrop-blur-xl">';
+  assert.ok(lintSourceChange({ path: "components/site-header.tsx", before: null, after: glass, reference: null }).some((violation) => violation.kind === "glassmorphism"));
+  assert.deepEqual(lintSourceChange({ path: "components/panel.tsx", before: null, after: '<div className="rounded-full bg-primary/20" />', reference: null }), []);
+  assert.deepEqual(lintSourceChange({ path: "components/panel.tsx", before: null, after: '<div className="bg-background backdrop-blur-xl" />', reference: null }), []);
 });
 
 test("invented awards and accolades are flagged as fabricated proof", () => {

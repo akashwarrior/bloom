@@ -11,8 +11,11 @@ function webScrapeResult(
   toolCallId: string,
   url: string,
   files: Array<{ assetId: string; filename: string }>,
-  targetKind: "preview" | "public" = "public",
+  kind: "preview" | "public" = "public",
 ): ModelMessage {
+  const evidence = kind === "preview"
+    ? { url, diagnostics: null }
+    : { url, fonts: [], colors: [] };
   return {
     role: "tool",
     content: [{
@@ -24,10 +27,7 @@ function webScrapeResult(
         value: [
           {
             type: "text",
-            text: JSON.stringify({
-              targetKind,
-              url,
-            }),
+            text: JSON.stringify(evidence),
           },
           ...files.map(({ assetId, filename }) => ({
             type: "file" as const,
@@ -58,15 +58,20 @@ const fiveImages = [
   { assetId: "shot-5", filename: "reference-5.webp" },
 ];
 
-test("evicts images only from older scrapes of the same normalized URL", () => {
-  const messages = [
+test("evicts images from older scrapes of the same normalized URL", () => {
+  const normalized = supersedeVisualReviewImages([
     webScrapeResult("metamask-1", "https://metamask.io/", fiveImages),
     webScrapeResult("metamask-2", "https://www.metamask.io/", fiveImages),
-  ];
+  ]);
+  assert.equal(reviewImageCount(normalized[0]!), 0);
+  assert.equal(reviewImageCount(normalized[1]!), 5);
 
-  const result = supersedeVisualReviewImages(messages);
-  assert.equal(reviewImageCount(result[0]!), 0);
-  assert.equal(reviewImageCount(result[1]!), 5);
+  const mixedKinds = supersedeVisualReviewImages([
+    webScrapeResult("metamask-1", "https://metamask.io/", fiveImages),
+    webScrapeResult("metamask-2", "https://metamask.io/", fiveImages, "preview"),
+  ]);
+  assert.equal(reviewImageCount(mixedKinds[0]!), 0);
+  assert.equal(reviewImageCount(mixedKinds[1]!), 5);
 });
 
 test("keeps images of different URLs side by side", () => {
@@ -85,47 +90,25 @@ test("keeps images of different URLs side by side", () => {
   assert.equal(reviewImageCount(result[1]!), 5);
 });
 
-test("evicts across scrape kinds when the URL matches", () => {
-  const messages = [
-    webScrapeResult("metamask-1", "https://metamask.io/", fiveImages),
-    webScrapeResult(
-      "metamask-2",
-      "https://metamask.io/",
-      fiveImages,
-      "preview",
-    ),
-  ];
-
-  const result = supersedeVisualReviewImages(messages);
-  assert.equal(reviewImageCount(result[0]!), 0);
-  assert.equal(reviewImageCount(result[1]!), 5);
-});
-
-test("keeps old images when the newest scrape of the same URL produced none", () => {
-  const messages = [
+test("keeps the latest image-bearing scrape when newer scrapes have no images", () => {
+  const keepsOldWhenEmpty = supersedeVisualReviewImages([
     webScrapeResult("metamask-1", "https://metamask.io/", fiveImages),
     webScrapeResult("metamask-2", "https://metamask.io/", []),
-  ];
+  ]);
+  assert.equal(reviewImageCount(keepsOldWhenEmpty[0]!), 5);
+  assert.equal(reviewImageCount(keepsOldWhenEmpty[1]!), 0);
 
-  const result = supersedeVisualReviewImages(messages);
-  assert.equal(reviewImageCount(result[0]!), 5);
-  assert.equal(reviewImageCount(result[1]!), 0);
-});
-
-test("keeps only the latest image-bearing scrape when a newer scrape has no images", () => {
-  const messages = [
+  const onlyLatest = supersedeVisualReviewImages([
     webScrapeResult("metamask-1", "https://metamask.io/", fiveImages),
     webScrapeResult("metamask-2", "https://metamask.io/", [
       { assetId: "fresh-1", filename: "fresh-1.webp" },
       { assetId: "fresh-2", filename: "fresh-2.webp" },
     ]),
     webScrapeResult("metamask-3", "https://metamask.io/", []),
-  ];
-
-  const result = supersedeVisualReviewImages(messages);
-  assert.equal(reviewImageCount(result[0]!), 0);
-  assert.equal(reviewImageCount(result[1]!), 2);
-  assert.equal(reviewImageCount(result[2]!), 0);
+  ]);
+  assert.equal(reviewImageCount(onlyLatest[0]!), 0);
+  assert.equal(reviewImageCount(onlyLatest[1]!), 2);
+  assert.equal(reviewImageCount(onlyLatest[2]!), 0);
 });
 
 test("deduplicates identical images inside the newest scrape", () => {
@@ -142,11 +125,11 @@ test("deduplicates identical images inside the newest scrape", () => {
   assert.equal(reviewImageCount(result[1]!), 2);
 });
 
-test("does not alter non-image message content", () => {
-  const message = webScrapeResult("scrape-1", "https://example.com/", [
+test("does not alter non-image content or standalone review-image parts", () => {
+  const toolMessage = webScrapeResult("scrape-1", "https://example.com/", [
     { assetId: "preview", filename: "preview.webp" },
   ]);
-  const resultPart = Array.isArray(message.content) ? message.content[0] : null;
+  const resultPart = Array.isArray(toolMessage.content) ? toolMessage.content[0] : null;
   assert.ok(resultPart?.type === "tool-result");
   assert.equal(resultPart.output.type, "content");
   resultPart.output.value.push({
@@ -156,10 +139,19 @@ test("does not alter non-image message content", () => {
     filename: "review.pdf",
   });
 
-  const result = supersedeVisualReviewImages([message]);
-  const outputPart = Array.isArray(result[0]?.content)
-    ? result[0].content[0]
-    : null;
+  const standalone = {
+    role: "user" as const,
+    content: [{
+      type: "file" as const,
+      data: { type: "data" as const, data: new Uint8Array([9]) },
+      mediaType: "image/webp",
+      filename: "bloom-asset:compacted-old__current-preview-top-0.webp",
+    }],
+  };
+
+  const result = supersedeVisualReviewImages([standalone, toolMessage]);
+  assert.equal(Array.isArray(result[0]?.content) ? result[0].content.length : -1, 1);
+  const outputPart = Array.isArray(result[1]?.content) ? result[1].content[0] : null;
   assert.ok(outputPart?.type === "tool-result");
   assert.equal(outputPart.output.type, "content");
   assert.equal(
@@ -168,26 +160,7 @@ test("does not alter non-image message content", () => {
     ),
     true,
   );
-  assert.equal(reviewImageCount(result[0]!), 1);
-});
-
-test("leaves standalone review-image parts untouched", () => {
-  const messages = [
-    {
-      role: "user" as const,
-      content: [{
-        type: "file" as const,
-        data: { type: "data" as const, data: new Uint8Array([9]) },
-        mediaType: "image/webp",
-        filename: "bloom-asset:compacted-old__current-preview-top-0.webp",
-      }],
-    },
-    webScrapeResult("metamask-1", "https://metamask.io/", fiveImages),
-  ];
-
-  const result = supersedeVisualReviewImages(messages);
-  assert.equal(Array.isArray(result[0]?.content) ? result[0].content.length : -1, 1);
-  assert.equal(reviewImageCount(result[1]!), 5);
+  assert.equal(reviewImageCount(result[1]!), 1);
 });
 
 test("normalizes equivalent URLs to the same key", () => {

@@ -5,7 +5,7 @@ import { selectBalancedVisualEvidence } from "../lib/visual-evidence-selection.t
 
 test("retains both reference and preview screenshots during compaction", () => {
   const references = Array.from({ length: 10 }, (_, index) => ({
-    filename: `clone-reference-${index}.webp`,
+    filename: `public-reference-${index}.webp`,
   }));
   const previews = Array.from({ length: 10 }, (_, index) => ({
     filename: `current-preview-${index}.webp`,
@@ -16,7 +16,7 @@ test("retains both reference and preview screenshots during compaction", () => {
   );
 
   assert.equal(
-    selected.filter(({ filename }) => filename.startsWith("clone-reference"))
+    selected.filter(({ filename }) => filename.startsWith("public-reference"))
       .length,
     5,
   );

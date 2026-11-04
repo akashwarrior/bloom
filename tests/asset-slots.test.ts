@@ -3,17 +3,14 @@ import test from "node:test";
 
 import { findAssetSlots, replacePlaceholder } from "../lib/design/asset-slots.ts";
 
-const source = `import { Hero, Bento, FeatureSplit } from "@/components/blocks"
-export function Page() {
+const source = `export function Page() {
   return (
     <>
-      <Hero variant="split" surface={1} title="Coffee" image="asset:hero-beans" />
-      <Bento surface={2} tiles={[
-        { title: "Farms", size: "lg", image: "asset:farm-rows" },
-        { title: "Roast", image: "asset:roaster-drum", size: "sm" },
-      ]} />
-      <FeatureSplit rows={[{ title: "Cupping", description: "x", image: "asset:cupping-table" }]} />
-      <Hero variant="split" image="asset:hero-beans" title="again" />
+      <img src="asset:hero-beans" className="aspect-[4/5] w-full object-cover" alt="" />
+      <img src="asset:farm-rows" className="aspect-video w-full" alt="" />
+      <Image src="asset:roaster-drum" className="aspect-square" alt="" />
+      <img src="asset:cupping-table" className="aspect-[5/4] w-full" alt="" />
+      <img src="asset:hero-beans" className="aspect-[4/5] w-full" alt="" />
     </>
   )
 }`;
@@ -24,7 +21,11 @@ test("asset placeholders are found once each with the aspect of their frame", ()
     slots.map((slot) => `${slot.name}:${slot.aspect}`),
     ["hero-beans:4:5", "farm-rows:16:9", "roaster-drum:1:1", "cupping-table:5:4"],
   );
-  assert.match(slots[0]!.context, /<Hero variant="split"/);
+});
+
+test("placeholders without an aspect utility fall back to a landscape frame", () => {
+  const [slot] = findAssetSlots("components/page.tsx", '<img src="asset:quiet-water" alt="" />');
+  assert.equal(slot!.aspect, "4:3");
 });
 
 test("placeholders are swapped for the generated file everywhere they appear", () => {

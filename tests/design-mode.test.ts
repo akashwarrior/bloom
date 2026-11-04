@@ -6,7 +6,7 @@ import { editClass, editCss } from "../lib/design-mode/styles.ts";
 
 const globals = {
   path: "app/globals.css",
-  content: "@theme inline {\n  --text-display: 4rem;\n  --text-display--font-weight: 700;\n  --color-surface-1: var(--surface-1);\n  --color-primary: var(--primary);\n  --shadow-card: var(--shadow-card-value);\n}\n",
+  content: "@theme inline {\n  --text-display: 4rem;\n  --color-surface-1: var(--surface-1);\n  --color-primary: var(--primary);\n  --shadow-card: var(--shadow-card-value);\n}\n",
 };
 
 const hero = {

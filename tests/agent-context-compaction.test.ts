@@ -6,7 +6,7 @@ import { compactionOutputSchema } from "../lib/agent-context-compaction.ts";
 
 function minimalCompaction() {
   return {
-    resolvedTask: "clone metamask.io",
+    resolvedTask: "build a site like metamask.io",
     taskStatus: "in-progress" as const,
     inferredRequirements: [],
     constraints: [],
@@ -20,7 +20,7 @@ function minimalCompaction() {
     nextSteps: [],
     sourceCoverage: [{
       sourceArea: "User Message",
-      retainedDetails: "The exact clone request was retained.",
+      retainedDetails: "The exact reference request was retained.",
       omissions: "None.",
     }],
   };
