@@ -5,7 +5,7 @@ const storageUrl = storageEndpoint ? new URL(storageEndpoint) : null;
 
 const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
-    "/api/projects/**": ["./templates/blocks/**/*", "./lib/design/library/images/**/*"],
+    "/api/projects/**": ["./lib/design/library/images/**/*"],
   },
   turbopack: {
     rules: {
