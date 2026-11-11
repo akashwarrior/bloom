@@ -1,0 +1,3 @@
+# Per-run worker copies: current working tree copies, node_modules symlinks,
+# Next.js build output, and temporary console logs.
+.runs/
