@@ -3,6 +3,17 @@ import "server-only";
 import z from "zod/v4";
 
 import { designNotesSchema, generateDesignDoc, type DesignNotes } from "@/lib/design/design-skill";
+import {
+  BLOOM_FONTS_PATH,
+  directionCss,
+  fontsModule,
+  resolveFonts,
+  storedDirectionSchema,
+  withDirectionCss,
+  withDirectionLayout,
+  type DesignDirection,
+} from "@/lib/design/direction";
+import { GOOGLE_FONT_CATALOG } from "@/lib/design/google-fonts.server";
 import { resolvedShadcnThemeSchema, shadcnThemeSchema, type ResolvedPreset } from "@/lib/design/shadcn-theme";
 import type { RequestTraceLogger } from "@/lib/request-trace-logger.server";
 import {
@@ -21,6 +32,8 @@ const designStateSchema = z.object({
     resolved: resolvedShadcnThemeSchema,
   }),
   notes: designNotesSchema,
+  /** The art direction written for this project; absent in projects designed before directions existed. */
+  direction: storedDirectionSchema.nullish(),
 });
 
 export type DesignState = z.infer<typeof designStateSchema>;
@@ -42,6 +55,8 @@ type WriteDesignSystemInput = {
   logger?: RequestTraceLogger;
   theme: ResolvedPreset;
   notes: DesignNotes;
+  /** The direction to keep with the design. Its tokens and fonts are layered over the preset while `overlay` is true. */
+  direction?: DesignDirection | null;
   onPlanned?: (paths: string[]) => void;
 };
 
@@ -69,12 +84,60 @@ async function rollbackToSnapshot(
   await logger?.write("design_system.rolled_back", { files: changed });
 }
 
+const GLOBALS_PATH = "app/globals.css";
+const LAYOUT_PATH = "app/layout.tsx";
+
+type FileChange = { type: "create"; path: string; content: string } | { type: "delete"; path: string };
+
 /**
- * Applies a shadcn create preset with `shadcn apply`, then writes Bloom's
- * design contract and state. `shadcn apply` owns app/globals.css, the fonts,
- * lib/utils.ts and components/ui; Bloom owns DESIGN.md and .bloom/design.json.
- * A failed apply, or a later write failure, restores every file the operation
- * touched so a partial preset never survives.
+ * The file changes that layer a direction's colors, radius and fonts over what
+ * `shadcn apply` wrote, or that remove an earlier layer when there is none.
+ */
+export function directionOverlayChanges(
+  files: Array<{ path: string; content: string }>,
+  direction: DesignDirection | null,
+): { changes: FileChange[]; warnings: string[] } {
+  const changes: FileChange[] = [];
+  const warnings: string[] = [];
+  const content = (path: string) => files.find((file) => file.path === path)?.content ?? null;
+  const css = content(GLOBALS_PATH);
+  const layout = content(LAYOUT_PATH);
+  const hasFontsModule = content(BLOOM_FONTS_PATH) !== null;
+  const put = (path: string, before: string | null, after: string) => {
+    if (before !== after) changes.push({ type: "create", path, content: after });
+  };
+
+  if (!direction?.overlay) {
+    if (css !== null) put(GLOBALS_PATH, css, withDirectionCss(css, null));
+    if (layout !== null) put(LAYOUT_PATH, layout, withDirectionLayout(layout, null) ?? layout);
+    if (hasFontsModule) changes.push({ type: "delete", path: BLOOM_FONTS_PATH });
+    return { changes, warnings };
+  }
+
+  if (css === null) throw new Error(`${GLOBALS_PATH} is missing, so the design direction cannot be applied.`);
+  const resolved = resolveFonts(direction.typography, GOOGLE_FONT_CATALOG);
+  if ("problems" in resolved) throw new Error(resolved.problems.join(" "));
+  const patchedLayout = layout === null ? null : withDirectionLayout(layout, direction.color.mode);
+  if (patchedLayout === null) {
+    warnings.push(`${LAYOUT_PATH} no longer has the shape shadcn generated, so the direction's fonts and color mode were not wired in; its colors still apply.`);
+    put(GLOBALS_PATH, css, withDirectionCss(css, directionCss(direction, null)));
+    if (hasFontsModule) changes.push({ type: "delete", path: BLOOM_FONTS_PATH });
+    return { changes, warnings };
+  }
+  put(GLOBALS_PATH, css, withDirectionCss(css, directionCss(direction, resolved.fonts)));
+  put(BLOOM_FONTS_PATH, content(BLOOM_FONTS_PATH), fontsModule(resolved.fonts));
+  put(LAYOUT_PATH, layout, patchedLayout);
+  return { changes, warnings };
+}
+
+/**
+ * Applies a shadcn create preset with `shadcn apply`, layers the project's art
+ * direction over it, then writes Bloom's design contract and state.
+ * `shadcn apply` owns lib/utils.ts and components/ui and writes the base of
+ * app/globals.css and app/layout.tsx; Bloom adds the direction's tokens and
+ * fonts to those two files and owns app/bloom-fonts.ts, DESIGN.md and
+ * .bloom/design.json. A failed apply, or a later write failure, restores every
+ * file the operation touched so a partial design never survives.
  */
 export async function writeDesignSystem({
   projectId,
@@ -82,6 +145,7 @@ export async function writeDesignSystem({
   logger,
   theme,
   notes,
+  direction = null,
   onPlanned,
 }: WriteDesignSystemInput) {
   const warnings: string[] = [];
@@ -116,11 +180,15 @@ export async function writeDesignSystem({
     throw new Error(`shadcn apply ${theme.resolved.code} failed${detail ? `: ${detail}` : ""}`);
   }
 
-  const state: DesignState = { theme, notes };
+  const state: DesignState = { theme, notes, direction };
 
   try {
-    const changes: Array<{ type: "create"; path: string; content: string }> = [
-      { type: "create", path: "DESIGN.md", content: generateDesignDoc(theme, { notes }) },
+    const afterApply = await captureProjectSourceSnapshot(projectId, signal);
+    const overlay = directionOverlayChanges(afterApply, direction);
+    warnings.push(...overlay.warnings);
+    const changes: FileChange[] = [
+      ...overlay.changes,
+      { type: "create", path: "DESIGN.md", content: generateDesignDoc(theme, { notes, direction }) },
       { type: "create", path: DESIGN_STATE_PATH, content: `${JSON.stringify(state, null, 2)}\n` },
     ];
     onPlanned?.(changes.map((change) => change.path));
@@ -128,6 +196,10 @@ export async function writeDesignSystem({
     let validation = result.validation;
     let tscError = result.tscError;
     const errorFiles = [...new Set([...(tscError ?? "").matchAll(/^([^\s(]+)\(\d+,\d+\): error/gm)].map((match) => match[1]!))];
+    if (validation.status === "failed" && errorFiles.includes(BLOOM_FONTS_PATH)) {
+      const detail = (tscError ?? "").split("\n").filter((line) => line.startsWith(BLOOM_FONTS_PATH)).join(" ").slice(0, 800);
+      throw new Error(`next/font could not load the direction's fonts: ${detail} Choose families and weights that exist on Google Fonts.`);
+    }
     const restorable = errorFiles.flatMap((path) => beforeApply.find((file) => file.path === path) ?? []);
     if (validation.status === "failed" && errorFiles.length > 0 && errorFiles.every((path) => path.startsWith("components/ui/")) && restorable.length === errorFiles.length) {
       const reverted = await applyProjectChanges(

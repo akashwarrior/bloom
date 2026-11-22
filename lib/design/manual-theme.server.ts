@@ -51,8 +51,8 @@ export async function getProjectTheme(projectId: string): Promise<{ theme: Shadc
 
 /**
  * Applies shadcn create inputs chosen by the user. A Bloom-designed project
- * keeps its inspiration notes and gets new colors, fonts, radius and component
- * style; any other project gets the plain `shadcn apply`. The result is saved
+ * keeps its inspiration notes and written direction and gets new colors, fonts,
+ * radius and component style; any other project gets the plain `shadcn apply`. The result is saved
  * as a user revision.
  */
 export async function applyManualTheme(projectId: string, requested: ShadcnTheme, signal?: AbortSignal) {
@@ -68,6 +68,8 @@ export async function applyManualTheme(projectId: string, requested: ShadcnTheme
       signal,
       theme: { input: theme, resolved },
       notes: current.notes,
+      // The user chose these colors and fonts, so they replace the direction's; its prose stays in DESIGN.md.
+      direction: current.direction ? { ...current.direction, overlay: false } : null,
     });
     warnings.push(...written.warnings);
   } else {

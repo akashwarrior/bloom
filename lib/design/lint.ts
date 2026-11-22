@@ -1,7 +1,7 @@
 export type DesignViolation = {
   path: string;
   line: number;
-  kind: "raw-color" | "hand-rolled-ui" | "reference-brand" | "copied-copy" | "copied-claim" | "invented-stat" | "fabricated-proof" | "decorative-glow" | "glassmorphism";
+  kind: "raw-color" | "hand-rolled-ui" | "reference-brand" | "copied-copy" | "copied-claim" | "invented-stat" | "fabricated-proof";
   excerpt: string;
   fix: string;
 };
@@ -89,11 +89,6 @@ const SHADCN_FOR: Record<string, string> = {
   table: "Table from @/components/ui/table",
 };
 const LINK_CLASSES = /<(?:a|Link)\b[^>]*?className=(?:"([^"]*)"|\{?`([^`]*)`)/g;
-const ROUNDED_FULL = /(?:^|[\s"'`])rounded-full(?:[\s"'`]|$)/;
-const NON_BACKDROP_BLUR = /(?:^|[\s"'`])blur-(?:sm|md|lg|xl|2xl|3xl|\[[^\]]+\])(?:[\s"'`]|$)/;
-const DECORATIVE_FILL = /(?:^|[\s"'`])(?:bg|from|via|to)-[^\s"'`]+/;
-const BACKDROP_BLUR = /(?:^|[\s"'`])backdrop-blur(?:-\w+)?(?:[\s"'`]|$)/;
-const TRANSLUCENT_FILL = /(?:^|[\s"'`])bg-[\w-]+\/\d{1,3}(?:[\s"'`]|$)/;
 
 /** A link carrying a fill, horizontal padding and rounding: a hand-made button. */
 function buttonLookalike(text: string) {
@@ -238,7 +233,7 @@ export function lintSourceChange({
         line,
         kind: "hand-rolled-ui",
         excerpt: excerpt(text),
-        fix: `A native <${match[1]}> skips the shadcn theme. Use ${SHADCN_FOR[match[1]!]} and style it with variants or className.`,
+        fix: `A native <${match[1]}> skips the theme, focus and state handling. Use ${SHADCN_FOR[match[1]!]}, start from the closest variant, and shape it with className as the direction requires.`,
       });
     }
     if (buttonLookalike(text)) {
@@ -247,7 +242,7 @@ export function lintSourceChange({
         line,
         kind: "hand-rolled-ui",
         excerpt: excerpt(text),
-        fix: 'A link styled as a button skips the shadcn theme. Use <Button render={<a href="..." />} nativeButton={false}> (or render={<Link href="..." />}) with a variant and size.',
+        fix: 'A link styled as a button skips the focus and state handling. Use <Button render={<a href="..." />} nativeButton={false}> (or render={<Link href="..." />}), start from the closest variant, and shape it with className as the direction requires.',
       });
     }
     for (const match of text.matchAll(RAW_PALETTE_CLASS)) {
@@ -256,7 +251,7 @@ export function lintSourceChange({
         line,
         kind: "raw-color",
         excerpt: match[0],
-        fix: "Replace with a semantic token class (bg-background, bg-card, bg-muted, bg-primary, text-muted-foreground, border-border, ...).",
+        fix: "Replace with a token class from DESIGN.md (bg-background, bg-card, bg-primary, text-muted-foreground, border-border, or one of the direction's named colors).",
       });
     }
     for (const match of text.matchAll(ARBITRARY_COLOR_CLASS)) {
@@ -265,25 +260,7 @@ export function lintSourceChange({
         line,
         kind: "raw-color",
         excerpt: match[0],
-        fix: "Arbitrary color values bypass the design system. Use a semantic token class; if a genuinely new color is needed, change the preset instead of writing it in JSX.",
-      });
-    }
-    if (ROUNDED_FULL.test(text) && NON_BACKDROP_BLUR.test(text) && DECORATIVE_FILL.test(text)) {
-      violations.push({
-        path,
-        line,
-        kind: "decorative-glow",
-        excerpt: excerpt(text),
-        fix: "A blurred rounded fill is a decorative glow blob. Remove it; build depth with real imagery, a solid surface, a border, or typographic scale instead.",
-      });
-    }
-    if (BACKDROP_BLUR.test(text) && TRANSLUCENT_FILL.test(text)) {
-      violations.push({
-        path,
-        line,
-        kind: "glassmorphism",
-        excerpt: excerpt(text),
-        fix: "A backdrop blur over a translucent fill is glassmorphism. Use a solid semantic surface (bg-background, bg-card, bg-muted) with a border-border hairline instead.",
+        fix: "Color values in class names bypass the design's color system. Use a token class from DESIGN.md, with an opacity modifier if needed; in CSS use var(--token).",
       });
     }
     const lower = text.toLowerCase();

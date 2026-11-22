@@ -63,16 +63,26 @@ async function withGenerationSlot<T>(run: () => Promise<T>) {
 type ThemeContext = {
   palette: string;
   surfaceColor: string | null;
+  /** The project's art direction for imagery, written by the design director. */
+  artDirection: string | null;
 };
 
 function generationPrompt(
   input: AssetInput,
   context: ThemeContext | null = null,
 ) {
+  const directed = Boolean(context?.artDirection);
   const contextInstructions = context
     ? [
-      `Color palette: ${context.palette}. Stay within these colors.`,
-      "Render clean, physically plausible lighting and materials. Do not add glows, neon, holographic sheen, lens flares, particle sparkles, or floating light streaks even if the request mentions them.",
+      directed
+        ? `Art direction for every image in this project: ${context.artDirection}`
+        : null,
+      directed
+        ? `The page's colors are ${context.palette}. Relate the image to them the way the art direction describes.`
+        : `Color palette: ${context.palette}. Stay within these colors.`,
+      directed
+        ? null
+        : "Render clean, physically plausible lighting and materials. Do not add glows, neon, holographic sheen, lens flares, particle sparkles, or floating light streaks even if the request mentions them.",
       context.surfaceColor
         ? `Background: a perfectly flat, uniform, plain ${context.surfaceColor} filling the entire canvas edge to edge, with no vignette, gradient, texture, floor, or cast background shadow.`
         : null,
@@ -87,13 +97,19 @@ function generationPrompt(
       ? ""
       : input.transparent
         ? "Use a genuinely transparent background and keep the subject cleanly isolated for layering."
-        : "Use only the background treatment explicitly described in the request. If none is described, do not invent scenery or decorative effects; use a simple solid background appropriate to the asset's role.",
+        : directed
+          ? ""
+          : "Use only the background treatment explicitly described in the request. If none is described, do not invent scenery or decorative effects; use a simple solid background appropriate to the asset's role.",
     contextInstructions,
     input.prompt ? `Request: ${input.prompt}` : "",
-    !input.transparent
-      ? "Compose it like a hero shot: the main subject is large and dominant, filling most of the frame and cropped close, never a small object floating in empty space."
-      : "",
-    "Do not add a presentation frame, browser mockup, caption, watermark, gradient, glow, shadow, texture, or unrelated decoration unless it is explicitly described in the request.",
+    directed
+      ? "Follow the framing the request and the art direction describe. Where they are silent, compose deliberately so the image holds up at the size and crop it will be shown."
+      : !input.transparent
+        ? "Compose it like a hero shot: the main subject is large and dominant, filling most of the frame and cropped close, never a small object floating in empty space."
+        : "",
+    directed
+      ? "Do not add a presentation frame, browser mockup, caption, watermark, logo or lettering unless the request describes it."
+      : "Do not add a presentation frame, browser mockup, caption, watermark, gradient, glow, shadow, texture, or unrelated decoration unless it is explicitly described in the request.",
   ].filter(Boolean).join("\n");
 }
 
@@ -151,7 +167,7 @@ function themeContext(
     if (token === "primary") return vars.primary ?? null;
     if (token === "accent") return vars.accent ?? null;
     if (token === "chart-3") return theme.resolved.chart[2] ?? null;
-    return null;
+    return vars[token] ?? null;
   };
 
   const named = (value: string | null) => {
@@ -168,9 +184,30 @@ function themeContext(
     ...theme.resolved.chart,
   ].flatMap((value) => named(value ?? null) ?? []))];
 
+  const direction = session.appliedDesign?.direction;
+  const exact = (value: string | null | undefined) => {
+    const name = named(value ?? null);
+    return name && value ? `${name} (${value})` : null;
+  };
+  if (direction) {
+    const directed = [...new Set([
+      vars.background,
+      vars.foreground,
+      vars.primary,
+      ...(direction.overlay ? direction.color.extra.map((color) => vars[color.name]) : []),
+      vars.card ?? vars.muted,
+    ].flatMap((value) => exact(value) ?? []))];
+    return {
+      palette: directed.join(", "),
+      surfaceColor: exact(surfaceColor),
+      artDirection: direction.imagery,
+    };
+  }
+
   return {
     palette: palette.join(", "),
     surfaceColor: named(surfaceColor),
+    artDirection: null,
   };
 }
 
@@ -271,7 +308,7 @@ async function generateOneAsset({
         input.name,
         "ASSET_GENERATION_FAILED",
         error,
-        `Do not retry "${input.name}" with the same request. Build this visual in code with the semantic tokens and standard Tailwind utilities instead, or change the subject.`,
+        `Do not retry "${input.name}" with the same request. Build this visual in code with the design tokens instead, or change the subject.`,
       ),
     };
   }
@@ -352,7 +389,7 @@ export const generateAsset = ({
 }: Pick<ToolParams, "projectId" | "signal" | "logger" | "session">) =>
   tool({
     description:
-      "Generate images (objects, materials, abstract forms, illustrations, or photographs). On designed sites, write src=\"asset:<name>\" where each image belongs, then call this with those exact names; Bloom swaps in the files. If no placeholder exists yet, the asset is still generated and you can use its localPath. Every asset needs a prompt. Write a literal prompt: subject, style, imagery direction, composition, crop, camera, lighting, materials, and where the asset appears. The preset palette is applied automatically. Set placement_surface to the token the image sits on. Build product screens, cards, charts, badges, and interface text in code. Returns each asset's name, localPath, and placedIn; a failed asset does not stop the rest.",
+      "Generate images (objects, materials, abstract forms, illustrations, or photographs). On designed sites, write src=\"asset:<name>\" where each image belongs, then call this with those exact names; Bloom swaps in the files. If no placeholder exists yet, the asset is still generated and you can use its localPath. Every asset needs a prompt. Write a literal prompt: subject, composition, crop, camera, lighting, materials, and where the asset appears. The project's imagery direction and palette from DESIGN.md are applied to every image automatically, so describe this image, not the style. Set placement_surface to the token the image sits on when it must blend into a flat surface. Build product screens, cards, charts, badges, and interface text in code. Returns each asset's name, localPath, and placedIn; a failed asset does not stop the rest.",
     inputSchema: generateAssetInputSchema,
     outputSchema: generateAssetOutputSchema,
     execute: async (input) => {

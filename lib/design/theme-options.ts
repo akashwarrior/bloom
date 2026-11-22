@@ -1,6 +1,5 @@
 import {
   PRESET_BASE_COLORS,
-  PRESET_CHART_COLORS,
   PRESET_FONT_HEADINGS,
   PRESET_FONTS,
   PRESET_ICON_LIBRARIES,
@@ -542,16 +541,6 @@ export const THEME_FIELDS: Array<{ key: keyof ThemeSelection; label: string }> =
   { key: "menuColor", label: "Menu surface" },
 ];
 
-const THEME_CONSTRAINTS = [
-  "`theme` is the primary color, not the light/dark mode.",
-  "A neutral theme or chart color (neutral, stone, zinc, gray, mauve, olive, mist, taupe) is valid only when it equals `baseColor`.",
-  "`chartColor` sets chart-1..5, used for charts and chart-role panels. The UI accent is shadcn's `accent` token, driven by `menuAccent`; it is not derived from a chart color.",
-  "`fontHeading: inherit` means the body font.",
-  "Rhea does not support the large radius.",
-  "`menuAccent` changes `--accent` / `--accent-foreground`, the menu hover and selected state; `menuColor` changes menu markup (dark or translucent) and is applied by `shadcn apply`.",
-  "Bloom is Base UI and LTR. `base` and `rtl` are project facts, not preset choices; changing them would change component APIs or flip the project.",
-] as const;
-
 /** Human-readable label for a preset value, falling back to title case. */
 export function optionLabel<T extends { label: string }>(options: Record<string, T>, value: string) {
   return options[value]?.label ?? label(value);
@@ -567,92 +556,53 @@ export function describePreset(theme: ThemeSelection) {
 }
 
 /**
- * The complete shadcn create option catalog for the design subagent. It
- * contains option facts and the constraints that make a preset valid; it does
- * not recommend or rank any option.
+ * The component-base options the design director chooses from: geometry, icon
+ * package, radius and menu treatment. Option facts only; nothing is ranked.
  */
-export function themeMenuText() {
-  const colorLine = (value: PresetThemeColor) => {
-    const option = THEME_COLOR_OPTIONS[value];
-    return `- \`${value}\` — ${option.label}, ${option.family}. ${option.note}${option.neutral ? " Neutral: only valid when it equals baseColor." : ""}`;
-  };
-  const fontLine = (value: PresetFont) => {
-    const option = FONT_OPTIONS[value];
-    return `- \`${value}\` — ${option.label}, ${option.type}; ${option.body ? "body-safe" : "not body-safe"}; ${option.display ? "heading-safe" : "not heading-safe"}. ${option.note}`;
-  };
+export function componentMenuText() {
   const lines: string[] = [
-    "## shadcn create options",
+    "## Component base",
     "",
-    "Every option available to the preset is listed below. Bloom resolves the chosen preset with shadcn and applies it with `shadcn apply`, which writes the tokens, fonts and components. Bloom does not add colors, fonts, radii, icons or menus outside these values.",
+    "The interface is built from shadcn/ui components on Base UI. These options decide what CSS variables cannot: control geometry and density, the icon package, and menu markup. Colors, fonts and the exact radius come from your direction.",
     "",
-    "### Project facts — not preset choices",
-    "- Bloom is Base UI (`base=base`).",
-    "- Bloom is LTR (`rtl=false`).",
-    "",
-    "### Style — component geometry",
+    "### style — control geometry and density",
   ];
   for (const value of PRESET_STYLES) {
     const option = STYLE_OPTIONS[value];
-    lines.push(`- \`${value}\` — ${option.label}: ${option.description}. ${option.geometry}${option.constraint ? ` Constraint: ${option.constraint}` : ""}`);
+    lines.push(`- \`${value}\` — ${option.description}.${option.constraint ? ` Constraint: ${option.constraint}` : ""}`);
   }
-  lines.push("", "### Base color — the neutral family (canvas, muted, borders)");
-  for (const value of PRESET_BASE_COLORS) {
-    const option = BASE_COLOR_OPTIONS[value];
-    lines.push(`- \`${value}\` — ${option.label}, ${option.temperature}. ${option.note}`);
-  }
-  lines.push("", "### Theme — the primary color (actions, focus, key highlights)");
-  for (const value of PRESET_THEMES) lines.push(colorLine(value));
-  lines.push("", "### Chart color — chart-1..5 for charts and chart-role panels");
-  for (const value of PRESET_CHART_COLORS) lines.push(colorLine(value));
-  lines.push("", "### Body font");
-  for (const value of PRESET_FONTS) lines.push(fontLine(value));
-  lines.push("", "### Heading font");
-  lines.push("- `inherit` — same as the body font.");
-  for (const value of PRESET_FONTS) lines.push(fontLine(value));
-  lines.push("", "### Icon library");
-  lines.push("shadcn apply installs the selected icon package automatically.");
+  lines.push("", "### iconLibrary");
   for (const value of PRESET_ICON_LIBRARIES) {
     const option = ICON_OPTIONS[value];
-    lines.push(`- \`${value}\` — ${option.label}. ${option.note} Package: \`${option.package}\`. Import: \`${option.import}\`. Usage: \`${option.usage}\`.`);
+    lines.push(`- \`${value}\` — ${option.label}. ${option.note}`);
   }
-  lines.push("", "### Radius");
+  lines.push("", "### radius — the starting corner scale (direction.shape.radiusPx overrides it exactly)");
   for (const value of PRESET_RADII) {
     const option = RADIUS_OPTIONS[value];
-    lines.push(`- \`${value}\` — ${option.label}${option.px === null ? "" : `, about ${option.px}px`}. ${option.note}`);
+    lines.push(`- \`${value}\`${option.px === null ? "" : ` — about ${option.px}px`}`);
   }
-  lines.push("", "### Mode");
-  for (const option of MODE_OPTIONS) {
-    lines.push(`- \`${option.value}\` — ${option.label}. ${option.note}`);
-  }
-  lines.push("", "### Menu accent — the focus/hover treatment inside menus");
+  lines.push("", "### menuAccent — hover and selected treatment inside menus");
   for (const value of PRESET_MENU_ACCENTS) {
-    const option = MENU_ACCENT_OPTIONS[value];
-    lines.push(`- \`${value}\` — ${option.label}. ${option.note}`);
+    lines.push(`- \`${value}\` — ${MENU_ACCENT_OPTIONS[value].note}`);
   }
-  lines.push("", "### Menu surface — the popover treatment");
+  lines.push("", "### menuColor — the popover surface");
   for (const value of PRESET_MENU_COLORS) {
-    const option = MENU_COLOR_OPTIONS[value];
-    lines.push(`- \`${value}\` — ${option.label}. ${option.note}`);
+    lines.push(`- \`${value}\` — ${MENU_COLOR_OPTIONS[value].note}`);
   }
-  lines.push(
-    "",
-    "### Validity facts",
-    ...THEME_CONSTRAINTS.map((constraint) => `- ${constraint}`),
-  );
   return lines.join("\n");
 }
 
-/** Critical shadcn component rules, distilled from the official skill. */
+/** How shadcn components are used in a Bloom project, distilled from the official skill. */
 export const SHADCN_COMPONENT_RULES = [
-  "Use `components/ui` components first. Start with the installed primitive and its `variant`/`size` props before writing custom markup; these components already handle semantic colors, focus, disabled, loading, overflow and accessibility.",
-  "Use the generated tokens for every color, font, radius and shadow. Raw Tailwind palette classes (`sky-600`, `zinc-900`, `emerald-500`), arbitrary color/font/radius values (`bg-[#...]`, `text-[15px]`, `rounded-[13px]`) and one-off styles are forbidden; structural utilities (`flex`, `grid`, `gap-*`, `p-*`, `max-w-*`) are fine.",
-  "`className` is for layout and composition only. Do not use it to override a component's colors, typography, radius, shadow or states; use the component's variants.",
-  "Use `gap-*`, not `space-x-*`/`space-y-*`; use `size-*` when width and height are equal; use `truncate`; use `cn()` for conditional classes.",
-  "Do not add manual `dark:` color overrides; semantic tokens already switch. Do not add `z-index` to overlay components.",
+  "Interactive controls (buttons, inputs, selects, dialogs, menus, tabs, tables) come from `components/ui`: they carry focus, keyboard, disabled and accessibility behavior. Read a component before using its API.",
+  "Start from the variant and size closest to the direction, then shape it with `className` wherever the direction asks for something the variants do not give: size, padding, radius, type, border, fill. Keep the focus ring and the disabled and invalid states working.",
+  "Every color is a token from DESIGN.md. Raw Tailwind palette classes (`sky-600`, `zinc-900`, `text-white`) and hex or rgb values in class names are rejected. Sizes, tracking, leading, spacing, grid tracks, radii and shadows may use any utility or arbitrary value the direction calls for (`text-[clamp(3rem,9vw,8rem)]`, `tracking-[-0.03em]`, `grid-cols-[2fr_1fr]`).",
+  "Use `gap-*`, not `space-x-*`/`space-y-*`; use `size-*` when width and height are equal; use `cn()` for conditional classes.",
+  "Do not add manual `dark:` color overrides; the tokens already describe the mode the design was made for. Do not add `z-index` to overlay components.",
   "Forms use `FieldGroup` + `Field`; `InputGroup` must contain `InputGroupInput`/`InputGroupTextarea`; 2–7 choices use `ToggleGroup`; grouped checkboxes/radios use `FieldSet` + `FieldLegend`.",
   "Items go inside their Group (`SelectItem` in `SelectGroup`, `DropdownMenuItem` in `DropdownMenuGroup`, `CommandItem` in `CommandGroup`).",
-  "Dialog, Sheet and Drawer always need a Title (visually hidden is fine). Use full Card composition. `Button` has no `isPending`; compose `Spinner` + `disabled`.",
-  "`TabsTrigger` must be inside `TabsList`; `Avatar` always needs `AvatarFallback`; use `Separator`, `Skeleton`, `Badge`, `Alert` and `Empty` instead of custom markup.",
-  "Icons come from the package already used by the project, or the exact package named in DESIGN.md. In `Button`, use `data-icon=\"inline-start\"` or `data-icon=\"inline-end\"`; do not add sizing classes inside components; pass icon components, not string keys.",
+  "Dialog, Sheet and Drawer always need a Title (visually hidden is fine). `Button` has no `isPending`; compose `Spinner` + `disabled`.",
+  "`TabsTrigger` must be inside `TabsList`; `Avatar` always needs `AvatarFallback`.",
+  "Icons come from the package named in DESIGN.md only. In `Button`, use `data-icon=\"inline-start\"` or `data-icon=\"inline-end\"`; pass icon components, not string keys.",
   "Toast uses the Base UI `toast` component.",
 ].join("\n");

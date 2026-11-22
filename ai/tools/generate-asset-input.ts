@@ -37,11 +37,11 @@ const assetInputSchema = z.strictObject({
   placement_surface: z
     .string()
     .trim()
-    .max(20)
+    .max(40)
     .nullable()
     .default(null)
     .describe(
-      "Design token the image will sit on: background, card, muted, primary, accent, or chart-3. The image is generated on a plain background of that color so it blends into the section or card.",
+      "Design token the image will sit on, such as background, card, muted, primary or one of the direction's named colors. The image is generated on a plain background of that color so it blends into the section or card. Leave null for photographs and full-bleed scenes.",
     ),
   prompt: z.string().trim().min(1).max(4_000).describe(
     "Subject, composition, crop, camera, lighting, materials, and the asset's visible role on the page.",

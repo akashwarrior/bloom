@@ -1,4 +1,5 @@
 import type { ResolvedPreset } from "@/lib/design/shadcn-theme";
+import type { DesignDirection } from "@/lib/design/direction";
 import type { PageDna } from "@/lib/design/dna";
 import type { DesignViolation } from "@/lib/design/lint";
 import { LIBRARY_BRANDS } from "../lib/design/library/copy.ts";
@@ -14,9 +15,13 @@ export type ReferenceCapture = {
 };
 
 export type AppliedDesign = {
-  /** The applied shadcn preset, including the resolved tokens used by the page and generated assets. */
+  /** The preset as the page renders it: the direction's tokens already replace the preset's. */
   theme: ResolvedPreset;
+  /** The art direction written for this project, when it has one. */
+  direction: DesignDirection | null;
 };
+
+export type PreviewShot = { url: string; label: string };
 
 type PreviewViewport = "desktop" | "mobile";
 
@@ -27,6 +32,16 @@ export class BuildSession {
   /** The user's latest request, used to exempt effects or fonts they asked for. */
   requestText = "";
   appliedDesign: AppliedDesign | null = null;
+  /** True once `designSite` applied a design in this run; the finished page then gets a design review. */
+  designedThisRun = false;
+  /** Sampled frames the director chose to show the builder, with the principle to take from each. */
+  designReferences: Array<{ frame: number; url: string; borrow: string }> = [];
+  /** DESIGN.md as written by the latest `designSite`, handed to the builder with the tool result. */
+  designDoc: string | null = null;
+  /** How many design reviews this run has already received. */
+  critiqueRounds = 0;
+  /** Whether the latest design review asked for revisions. */
+  revisionsRequested = false;
   violations = new Map<string, DesignViolation[]>();
   /** File contents before this run first touched them; lint compares against these. */
   baselines = new Map<string, string | null>();
@@ -39,6 +54,7 @@ export class BuildSession {
   /** Increments on every source write; previews are only current for the same version. */
   #editVersion = 0;
   #previewedVersion: Record<PreviewViewport, number> = { desktop: -1, mobile: -1 };
+  #previewShots: Record<PreviewViewport, PreviewShot[]> = { desktop: [], mobile: [] };
   /** The last page route edited in this run; finishBuild verifies it without relying on a design brief. */
   #lastPagePath: string | null = null;
 
@@ -108,8 +124,14 @@ export class BuildSession {
     this.#editVersion += 1;
   }
 
-  recordPreview(viewport: PreviewViewport) {
+  recordPreview(viewport: PreviewViewport, shots: PreviewShot[] = []) {
     this.#previewedVersion[viewport] = this.#editVersion;
+    this.#previewShots[viewport] = shots;
+  }
+
+  /** Screenshots of the latest capture of a viewport, for the design review. */
+  previewShots(viewport: PreviewViewport) {
+    return this.#previewShots[viewport];
   }
 
   /** Remembers the page route the main agent actually edited, not a route invented by the design tool. */

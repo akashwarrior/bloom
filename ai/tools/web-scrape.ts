@@ -20,6 +20,9 @@ const INITIAL_MODEL_SCREENSHOTS = 10;
 const PUBLIC_REF_SCREENSHOTS = 5;
 const PREVIEW_SCREENSHOTS = 6;
 const CAPTURE_SCREENSHOTS = 16;
+/** Full-size viewport frames kept per capture for the design review. */
+const REVIEW_DESKTOP_FRAMES = 4;
+const REVIEW_MOBILE_FRAMES = 3;
 
 const screenshotSchema = z.strictObject({
   name: z.string(),
@@ -68,7 +71,7 @@ export const webScrape = ({
 }: Pick<ToolParams, "projectId" | "signal" | "logger" | "session">) =>
   tool({
     description:
-      "Capture a rendered page. Public URLs return the page's fonts, colors and screenshots; use the screenshots as the source of truth for composition and styling, and transfer design principles instead of copying its content. Pass the current project preview as a relative path (for example `/` or `/login`) to return browser diagnostics and screenshots of the built page. Screenshots are always captured: one full-page image, or viewport frames when deep_scrape is set. Use viewport `mobile` on the preview to check responsive overflow.",
+      "Capture a rendered page. Public URLs return the page's fonts, colors and screenshots; use the screenshots as the source of truth for composition and styling, and transfer design principles instead of copying its content. Pass the current project preview as a relative path (for example `/` or `/login`) to return browser diagnostics and screenshots of the built page. Screenshots are always captured: one full-page image (plus the first viewport at full size for the preview), or viewport frames when deep_scrape is set. Use viewport `mobile` on the preview to check responsive overflow.",
     inputSchema: z.strictObject({
       url: z
         .string()
@@ -165,8 +168,14 @@ export const webScrape = ({
               : PREVIEW_SCREENSHOTS,
           );
 
+        // A full-page capture of a long page is scaled far down when a model
+        // looks at it, so a preview also returns its first viewport at full size.
+        const firstViewport = scrape.targetKind === "preview" && fullPage && numberedScreenshots.length > 1
+          ? [numberedScreenshots[0]!]
+          : [];
+
         const screenshots = fullPage
-          ? [fullPage]
+          ? [fullPage, ...firstViewport]
           : representativeScreenshots.map((screenshot) => ({
             name: screenshot.name,
             url: screenshot.url,
@@ -177,7 +186,11 @@ export const webScrape = ({
 
         if (scrape.targetKind === "preview") {
           if (!pageUnavailable && !scrape.blocked && (viewport === "desktop" || viewport === "mobile")) {
-            session.recordPreview(viewport);
+            const frames = evenlySelectItems(numberedScreenshots, viewport === "desktop" ? REVIEW_DESKTOP_FRAMES : REVIEW_MOBILE_FRAMES);
+            session.recordPreview(viewport, [
+              ...(fullPage ? [{ url: fullPage.url, label: "full page, top to bottom (scaled down)" }] : []),
+              ...frames.map((frame) => ({ url: frame.url, label: `viewport at scrollY ${frame.scrollY}px, full size` })),
+            ]);
           }
           return {
             diagnostics: scrape.diagnostics,
@@ -254,9 +267,11 @@ export const webScrape = ({
           ? `Full page, top to bottom (${input.url})`
           : publicCapture
             ? `Frame ${screenshot.frame ?? "?"} of ${output.screenshots.length} (${input.url}, scrollY ${screenshot.scrollY}px, ${screenshot.scrollPercentage}%)`
-            : `Your preview at scrollY ${screenshot.scrollY}px (${screenshot.scrollPercentage}%)`,
+            : screenshot.scrollY === 0
+              ? "Your preview, first viewport at full size"
+              : `Your preview at scrollY ${screenshot.scrollY}px (${screenshot.scrollPercentage}%)`,
         url: screenshot.url,
-        filename: `${screenshot.scrollPercentage}.webp`,
+        filename: screenshot.name === FULL_PAGE_SCREENSHOT_NAME ? "full-page.webp" : `${screenshot.scrollPercentage}.webp`,
       }));
 
       if (images.length === 0) {

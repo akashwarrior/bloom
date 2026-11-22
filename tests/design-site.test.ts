@@ -14,7 +14,9 @@ import {
   PRESET_THEMES,
 } from "shadcn/preset";
 
-import { designSelectionSchema } from "../lib/design/design-selection.ts";
+import { designSelectionSchema, presetForComponents } from "../lib/design/design-selection.ts";
+import { storedDirection } from "../lib/design/direction.ts";
+import { directionInput } from "./fixtures/direction.ts";
 import { designNotesSchema, generateDesignDoc } from "../lib/design/design-skill.ts";
 import {
   compatibleShadcnTheme,
@@ -29,12 +31,11 @@ import {
   ICON_OPTIONS,
   MENU_ACCENT_OPTIONS,
   MENU_COLOR_OPTIONS,
-  MODE_OPTIONS,
   RADIUS_OPTIONS,
   STYLE_OPTIONS,
   THEME_COLOR_OPTIONS,
   optionLabel,
-  themeMenuText,
+  componentMenuText,
 } from "../lib/design/theme-options.ts";
 
 test("theme metadata covers every shadcn create option", () => {
@@ -52,62 +53,22 @@ test("theme metadata covers every shadcn create option", () => {
   assert.equal(optionLabel(FONT_OPTIONS, "instrument-serif"), "Instrument Serif");
   assert.equal(optionLabel(FONT_OPTIONS, "instrument-sans"), "Instrument Sans");
 
-  const menu = themeMenuText();
+  const menu = componentMenuText();
   for (const value of PRESET_STYLES) {
     assert.match(menu, new RegExp(`\\\`${value}\\\``));
     assert.ok(menu.includes(STYLE_OPTIONS[value].description));
-    assert.ok(menu.includes(STYLE_OPTIONS[value].geometry));
-    assert.equal("official" in STYLE_OPTIONS[value], false);
     assert.equal("pickWhen" in STYLE_OPTIONS[value], false);
     assert.equal("avoidWhen" in STYLE_OPTIONS[value], false);
   }
-  for (const value of PRESET_BASE_COLORS) {
-    assert.match(menu, new RegExp(`\\\`${value}\\\``));
-    assert.ok(menu.includes(BASE_COLOR_OPTIONS[value].note));
-  }
-  for (const value of PRESET_THEMES) {
-    assert.match(menu, new RegExp(`\\\`${value}\\\``));
-    assert.ok(menu.includes(THEME_COLOR_OPTIONS[value].note));
-  }
-  for (const value of PRESET_CHART_COLORS) {
-    assert.match(menu, new RegExp(`\\\`${value}\\\``));
-    assert.ok(menu.includes(THEME_COLOR_OPTIONS[value].note));
-  }
-  for (const value of PRESET_FONTS) {
-    assert.match(menu, new RegExp(`\\\`${value}\\\``));
-    assert.ok(menu.includes(FONT_OPTIONS[value].note));
-  }
-  for (const value of PRESET_FONT_HEADINGS) {
-    if (value === "inherit") assert.match(menu, /`inherit` — same as the body font/);
-    else assert.match(menu, new RegExp(`\\\`${value}\\\``));
-  }
   for (const value of PRESET_ICON_LIBRARIES) {
     assert.match(menu, new RegExp(`\\\`${value}\\\``));
-    assert.ok(menu.includes(ICON_OPTIONS[value].package));
-    assert.ok(menu.includes(ICON_OPTIONS[value].import));
-    assert.ok(menu.includes(ICON_OPTIONS[value].usage));
+    assert.ok(menu.includes(ICON_OPTIONS[value].note));
   }
-  for (const value of PRESET_RADII) {
-    assert.match(menu, new RegExp(`\\\`${value}\\\``));
-    assert.ok(menu.includes(RADIUS_OPTIONS[value].note));
-  }
-  for (const option of MODE_OPTIONS) {
-    assert.match(menu, new RegExp(`\\\`${option.value}\\\``));
-    assert.ok(menu.includes(option.note));
-  }
-  for (const value of PRESET_MENU_ACCENTS) {
-    assert.match(menu, new RegExp(`\\\`${value}\\\``));
-    assert.ok(menu.includes(MENU_ACCENT_OPTIONS[value].note));
-  }
-  for (const value of PRESET_MENU_COLORS) {
-    assert.match(menu, new RegExp(`\\\`${value}\\\``));
-    assert.ok(menu.includes(MENU_COLOR_OPTIONS[value].note));
-  }
-  assert.match(menu, /theme\` is the primary color, not the light\/dark mode/);
-  assert.match(menu, /Rhea does not support the large radius/);
-  assert.match(menu, /Project facts — not preset choices/);
-  assert.match(menu, /installs the selected icon package automatically/);
-  assert.doesNotMatch(menu, /Pick when|Avoid when|Official pairing|industry|audience|recommended|recommendation|best for|ideal for/i);
+  for (const value of PRESET_RADII) assert.match(menu, new RegExp(`\\\`${value}\\\``));
+  for (const value of PRESET_MENU_ACCENTS) assert.ok(menu.includes(MENU_ACCENT_OPTIONS[value].note));
+  for (const value of PRESET_MENU_COLORS) assert.ok(menu.includes(MENU_COLOR_OPTIONS[value].note));
+  // The director chooses colors and fonts freely, so the menu must not offer a closed list of them.
+  assert.doesNotMatch(menu, /### (?:Theme|Base color|Body font|Heading font)/);
 });
 
 test("Rhea with a large radius is normalized before shadcn sees it", () => {
@@ -175,62 +136,74 @@ const resolved: ResolvedShadcnTheme = {
 };
 
 const theme: ResolvedPreset = { input: themeInput, resolved };
+const direction = storedDirection(directionInput);
 
-test("the design selection contains only the shadcn preset", () => {
-  assert.deepEqual(designSelectionSchema.parse({ shadcn: themeInput }), { shadcn: themeInput });
-  assert.throws(() => designSelectionSchema.parse({ shadcn: themeInput, brand: { name: "Harbor" } }));
+test("the design selection is a written direction plus a component base", () => {
+  const components = { style: "sera", iconLibrary: "hugeicons", radius: "medium", menuAccent: "bold", menuColor: "default" } as const;
+  const parsed = designSelectionSchema.parse({ direction: directionInput, components });
+  assert.equal(parsed.direction.concept, directionInput.concept);
+  assert.deepEqual(parsed.components, components);
+  // A closed preset of colors and fonts is no longer the director's output.
+  assert.throws(() => designSelectionSchema.parse({ shadcn: themeInput }));
+  assert.throws(() => designSelectionSchema.parse({ direction: { ...directionInput, concept: "Nice." }, components }));
+  assert.throws(() => designSelectionSchema.parse({ direction: { ...directionInput, explored: [] }, components }));
+
+  const preset = presetForComponents(components, "dark");
+  assert.equal(preset.style, "sera");
+  assert.equal(preset.mode, "dark");
+  assert.deepEqual(compatibleShadcnTheme(preset).notes, []);
 });
 
-test("DESIGN.md is a theme-only skill with the preset, role map, inspiration and acceptance rules", () => {
+test("DESIGN.md carries the written direction and the tokens it resolved to", () => {
   const notes = designNotesSchema.parse({
-    inspiration: [{
-      number: 1,
-      imageId: "quiet-editorial",
-      assetUrl: "/api/assets/library-frame-1.webp",
-      batch: 1,
-    }],
+    inspiration: [{ number: 1, imageId: "quiet-editorial", assetUrl: "/api/assets/library-frame-1.webp", batch: 1 }],
   });
-  const doc = generateDesignDoc(theme, { notes });
+  const doc = generateDesignDoc(theme, { notes, direction });
 
-  assert.match(doc, /^# Bloom design skill/m);
-  assert.match(doc, /## Applied preset/);
-  assert.match(doc, /Sera \(sera\)/);
-  assert.match(doc, /Stone \/ Stone \/ Amber/);
-  assert.match(doc, /Resolved preset code: `b0`/);
-  assert.match(doc, /Menus: bold accent; default surface/);
+  assert.match(doc, /^# Design direction/m);
+  for (const heading of ["The idea", "Composition", "Imagery", "Motion", "Voice", "What this design refuses", "Color", "Type", "Shape and surface", "Inspiration", "Components", "Before you call it done"]) {
+    assert.match(doc, new RegExp(`^## ${heading}$`, "m"));
+  }
+  assert.ok(doc.includes(direction.concept));
+  assert.ok(doc.includes(direction.signature));
+  assert.ok(doc.includes(direction.composition));
+  assert.ok(doc.includes(direction.typography.treatment));
+  assert.ok(doc.includes(direction.color.strategy));
+  for (const item of direction.avoid) assert.ok(doc.includes(`- ${item}`));
+
+  // The direction's values, not the preset's, are what the page uses.
+  assert.match(doc, /`bg-background text-foreground` \| #10231C \/ #F2EDE3/);
+  assert.match(doc, /`bg-primary text-primary-foreground` \| #E8B04A \/ #10231C/);
+  assert.match(doc, /`bg-signal text-signal-foreground`, `text-signal`, `border-signal` \| #FF5A36 \/ #10231C/);
+  assert.match(doc, /designed for dark mode/);
+  assert.match(doc, /Display: `font-heading` — Fraunces, with italics/);
+  assert.match(doc, /Body: `font-sans` — Hanken Grotesk/);
+  assert.match(doc, /Utility: `font-mono` — DM Mono, weights 400\/500/);
+  assert.match(doc, /Base radius: 2px/);
+  assert.match(doc, /Frame 1 \(\/api\/assets\/library-frame-1\.webp\): /);
   assert.match(doc, /Icons: Hugeicons\. Package: `@hugeicons\/react \+ @hugeicons\/core-free-icons`/);
-  assert.match(doc, /Use only this package; do not add another icon library/);
-  assert.match(doc, /Use `components\/ui` components first/);
-  assert.match(doc, /sky-600/);
-  assert.match(doc, /`className` is for layout and composition only/);
-  assert.match(doc, /start a full redesign/);
-  assert.match(doc, /Menu hover/);
-  assert.match(doc, /Primary action/);
-
-  const inverted = generateDesignDoc({ input: { ...themeInput, menuColor: "inverted" }, resolved });
-  assert.match(inverted, /Menu hover \(inverted dark surface\)/);
-  assert.match(inverted, /menu hover and selected items \(bold accent on the inverted dark surface\) \| #E7E5E4 \/ #1C1917/);
-
-  assert.match(doc, /## Inspiration/);
-  assert.match(doc, /Frame 1: image `quiet-editorial` — \/api\/assets\/library-frame-1\.webp/);
-  assert.match(doc, /## Resolved role map/);
-  assert.match(doc, /Chart 3 \| `chart-3`/);
-  assert.match(doc, /## Acceptance checklist/);
-  assert.match(doc, /The page uses `@hugeicons\/react \+ @hugeicons\/core-free-icons`/);
-  assert.match(doc, /Do not hand-edit this file, `app\/globals\.css`, `components\/ui` or `\.bloom\/design\.json`/);
-  assert.match(doc, /Bloom theme panel/);
-
-  assert.doesNotMatch(doc, /## (?:Page|Composition|Brand|Signature|Imagery|Layout)\b/);
-  assert.doesNotMatch(doc, /\bpageKind\b|\brationale\b|\blimitations\b|sectionPadding|contentWidth/i);
-  assert.doesNotMatch(doc, /Cream is approximated/);
-  assert.doesNotMatch(doc, /Region 2: lagoon/);
-  assert.doesNotMatch(doc, /bg-surface-\d/);
-  assert.doesNotMatch(doc, /font-display/);
-  assert.doesNotMatch(doc, /text-5xl md:text-7xl/);
-  assert.doesNotMatch(doc, /max-w-6xl/);
-  assert.doesNotMatch(doc, /py-16 md:py-24/);
+  assert.match(doc, /shape it with `className`/);
+  assert.match(doc, /Do not hand-edit this file, `app\/globals\.css`, `app\/layout\.tsx`, `app\/bloom-fonts\.ts`/);
+  assert.doesNotMatch(doc, /`className` is for layout and composition only/);
+  assert.doesNotMatch(doc, /explored|whyNot/);
 });
 
-test("DESIGN.md states when no inspiration frames were sampled", () => {
-  assert.match(generateDesignDoc(theme), /No design-library frames were sampled/);
+test("a preset picked in the theme panel replaces the direction's colors and fonts but keeps its prose", () => {
+  const doc = generateDesignDoc(theme, { direction: { ...direction, overlay: false } });
+  assert.ok(doc.includes(direction.concept));
+  assert.match(doc, /`bg-background text-foreground` \| #FAFAF9 \/ #1C1917/);
+  assert.match(doc, /changed in the theme panel/);
+  assert.doesNotMatch(doc, /bg-signal/);
+  assert.doesNotMatch(doc, /Fraunces/);
+  assert.match(doc, /Base radius: 10px/);
+});
+
+test("DESIGN.md without a direction still documents tokens and component rules", () => {
+  const doc = generateDesignDoc(theme);
+  assert.match(doc, /^# Design direction/m);
+  assert.doesNotMatch(doc, /^## The idea$/m);
+  assert.match(doc, /`bg-primary text-primary-foreground` \| #1C1917 \/ #FAFAF9/);
+  assert.match(doc, /No library frames were sampled/);
+  const inverted = generateDesignDoc({ input: { ...themeInput, menuColor: "inverted" }, resolved });
+  assert.match(inverted, /\(inverted dark surface\) \| `bg-accent text-accent-foreground` \| #E7E5E4 \/ #1C1917/);
 });

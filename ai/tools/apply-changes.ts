@@ -17,10 +17,11 @@ import { applyChangesInputSchema, groupApplyChanges } from "./apply-changes-inpu
 import { buildApplyChangesFiles } from "./apply-changes-output";
 
 const LINE_NUMBER_PREFIX = /^\s*\d+\t/;
-/** Files Bloom owns and writes from the applied design preset. */
+/** Files Bloom owns and writes from the applied design. */
 const GENERATED_DESIGN_PATHS = new Set([
   "app/globals.css",
   "app/layout.tsx",
+  "app/bloom-fonts.ts",
   "components.json",
   "lib/utils.ts",
   "DESIGN.md",
@@ -135,9 +136,9 @@ export const applyChanges = ({
         if (changes.some((change) => isGeneratedDesignPath(change.path))) {
           failureCode = "GENERATED_DESIGN_FILE";
           failureRecovery =
-            "These files are generated from the applied design. Change the preset from the Bloom theme panel, or start a full redesign; do not edit them by hand.";
+            "These files are generated from the applied design. Build with the tokens and fonts they provide; a different look needs a redesign or the theme panel, not a hand edit.";
           throw new Error(
-            `Bloom owns ${[...GENERATED_DESIGN_PATHS].join(", ")} and components/ui. They are generated from the applied design; change the preset from the theme panel or start a full redesign instead of editing them directly.`,
+            `Bloom owns ${[...GENERATED_DESIGN_PATHS].join(", ")} and components/ui. They are generated from the applied design; work with the tokens and fonts in DESIGN.md, and put page-specific CSS in a file of its own imported by the page.`,
           );
         }
 
@@ -146,7 +147,7 @@ export const applyChanges = ({
           failureRecovery =
             "Call designSite first; it writes the design system and DESIGN.md, then build the UI against that contract.";
           throw new Error(
-            "This project has no design system yet. Call designSite before writing UI files so the page is built from an applied shadcn preset instead of ad-hoc colors and fonts.",
+            "This project has no design yet. Call designSite before writing UI files so the page is built from a direction written for it instead of ad-hoc colors and fonts.",
           );
         }
 

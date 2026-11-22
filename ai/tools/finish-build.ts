@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import z from "zod/v4";
 
+import { critiqueBlockers, MAX_CRITIQUE_ROUNDS, runDesignCritic } from "@/ai/design-critic";
 import type { ToolParams } from "@/ai/tools";
 import { toolFailure, toolOutputSchema } from "@/ai/tools/schemas";
 import { lintSourceChange, summarizeViolations } from "@/lib/design/lint";
@@ -17,6 +18,8 @@ const outputSchema = toolOutputSchema(
     attempt: z.number().int().positive(),
     blocking: z.array(z.string()).max(20),
     verified: z.array(z.string()).max(20),
+    /** What the design reviewer said already works; keep it while revising. */
+    keep: z.array(z.string()).max(4).optional(),
     next: z.string(),
   }),
 );
@@ -31,12 +34,13 @@ export const finishBuild = ({
   projectId,
   signal,
   session,
-}: Pick<ToolParams, "projectId" | "signal" | "session">) => {
+  logger,
+}: Pick<ToolParams, "projectId" | "signal" | "session" | "logger">) => {
   let attempts = 0;
 
   return tool({
     description:
-      "Verify the finished build. Run it only after the final edit, with desktop and mobile previews captured by webScrape. It checks the full TypeScript build, design-contract violations, pending image placeholders, the page route edited in this run, and that both previews are newer than the last source write. A failed result blocks completion: fix every listed item and call it again, up to three attempts.",
+      "Verify the finished build. Run it only after the final edit, with desktop and mobile previews captured by webScrape. It checks the full TypeScript build, the design checks, pending image placeholders, the page route edited in this run, and that both previews are newer than the last source write. When a design was created in this run, an independent design reviewer then looks at those captures against the direction and may ask for revisions. A failed result blocks completion: fix every listed item, capture both viewports again and call it again.",
     inputSchema: z.strictObject({}),
     outputSchema,
     execute: async () => {
@@ -119,12 +123,63 @@ export const finishBuild = ({
           }
         }
 
+        // Design review: only once the page is mechanically sound, only for a
+        // design made in this run, and never more than MAX_CRITIQUE_ROUNDS times.
+        let keep: string[] | undefined;
+        const designDoc = snapshot.find((file) => file.path === "DESIGN.md")?.content;
+        if (
+          blocking.length === 0 &&
+          session.designedThisRun &&
+          session.appliedDesign?.direction &&
+          designDoc &&
+          session.critiqueRounds < MAX_CRITIQUE_ROUNDS
+        ) {
+          const round = session.critiqueRounds + 1;
+          const critique = await runDesignCritic({
+            projectId,
+            signal,
+            logger,
+            request: session.requestText,
+            designDoc,
+            round,
+            shots: { desktop: session.previewShots("desktop"), mobile: session.previewShots("mobile") },
+          }).catch(async (error) => {
+            await logger.write("design_critic.failed", { error });
+            return null;
+          });
+          if (!critique) {
+            verified.push("The design review was unavailable, so the page was not reviewed by the design reviewer");
+          } else {
+            session.critiqueRounds = round;
+            keep = critique.keep;
+            session.revisionsRequested = critique.verdict === "revise" && critique.issues.length > 0;
+            if (session.revisionsRequested) {
+              // A review is not a failed verification attempt; it does not use one up.
+              attempts -= 1;
+              return {
+                status: "failed" as const,
+                attempt,
+                blocking: critiqueBlockers(critique).slice(0, 20),
+                verified,
+                keep,
+                next: `The build is sound, but the design reviewer asks for revisions (review ${round} of ${MAX_CRITIQUE_ROUNDS}). First impression: ${critique.firstImpression} Make each change properly rather than minimally, keep what is listed under keep, then capture desktop and mobile again and call finishBuild.`,
+              };
+            }
+            verified.push(`The design reviewer approved the page against the direction (review ${round})`);
+            for (const issue of critique.issues) verified.push(`Reviewer note, not blocking: ${issue.where}: ${issue.problem}`);
+          }
+        }
+
+        if (blocking.length === 0 && keep === undefined && session.designedThisRun && session.revisionsRequested) {
+          verified.push("The revisions requested in the last design review were made but not reviewed again");
+        }
+
         if (blocking.length === 0) {
           return {
             status: "passed" as const,
             attempt,
             blocking,
-            verified,
+            verified: verified.slice(0, 20),
             next: "Verification passed. Write the final summary now and claim only what is listed under verified.",
           };
         }

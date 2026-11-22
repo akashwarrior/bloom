@@ -51,6 +51,7 @@ import {
   shouldPersistContextCheckpoint,
   type MessageBoundary,
 } from "@/lib/context-checkpoint";
+import { effectivePreset } from "@/lib/design/design-skill";
 import { readDesignState } from "@/lib/design/write-design-system.server";
 import { describeSelections } from "@/lib/element-selection";
 import prisma from "@/lib/prisma";
@@ -685,11 +686,14 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         if (mode === "BUILD") {
           const designState = readDesignState(baseFiles);
           if (designState) {
-            session.appliedDesign = { theme: designState.theme };
+            const direction = designState.direction ?? null;
+            session.appliedDesign = { theme: effectivePreset(designState.theme, direction), direction };
           }
         }
 
-        const maxSteps = mode === "BUILD" ? 80 : 30;
+        // A build includes the design pass, the page, its images, captures and up
+        // to two rounds of design-review revisions.
+        const maxSteps = mode === "BUILD" ? 120 : 30;
 
         const agentTools = tools({
           projectId: id,
