@@ -11,6 +11,7 @@ import {
   directionCssVars,
   directionDigest,
   fontsModule,
+  namedColorsCss,
   resolveFont,
   resolveFonts,
   storedDirection,
@@ -177,6 +178,20 @@ test("the overlay is idempotent and fully removable", () => {
   assert.match(withDirectionLayout(wired, "light")!, /forcedTheme="light"/);
   assert.equal(withDirectionLayout(wired, null), SHADCN_LAYOUT);
   assert.equal(withDirectionLayout("export default function Layout() { return null }", "dark"), null);
+});
+
+test("named colors outlive the overlay so existing page classes keep resolving", () => {
+  const named = namedColorsCss(direction);
+  assert.ok(named);
+  assert.match(named, /--signal: #FF5A36;/);
+  assert.match(named, /--signal-foreground: #10231C;/);
+  assert.match(named, /--color-signal: var\(--signal\);/);
+  // Only the named colors: the preset's own semantic tokens, fonts and radius must win.
+  assert.doesNotMatch(named, /--(?:background|primary|radius|font-)/);
+  const css = withDirectionCss(withDirectionCss(":root {}\n", directionCss(direction, null)), named);
+  assert.equal(css.match(/bloom:direction:start/g)?.length, 1);
+  assert.doesNotMatch(css, /--primary: #E8B04A/);
+  assert.equal(namedColorsCss({ color: { ...direction.color, extra: [] } }), null);
 });
 
 test("the page's effective tokens come from the direction while its overlay is on", () => {

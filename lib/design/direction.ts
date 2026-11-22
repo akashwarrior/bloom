@@ -372,6 +372,27 @@ export function directionCss(direction: Pick<DesignDirection, "color" | "shape">
   ].join("\n");
 }
 
+/**
+ * The direction's named colors on their own. Pages are written against
+ * `bg-<name>` classes, so these stay defined after a preset from the theme
+ * panel replaces the direction's semantic tokens and fonts. Null when the
+ * direction adds no colors.
+ */
+export function namedColorsCss(direction: Pick<DesignDirection, "color">) {
+  const { extra } = direction.color;
+  if (extra.length === 0) return null;
+  return [
+    BLOCK_START,
+    ":root, .dark {",
+    ...extra.flatMap((color) => [`  --${color.name}: ${upper(color.value)};`, `  --${color.name}-foreground: ${upper(color.on)};`]),
+    "}",
+    "@theme inline {",
+    ...extra.flatMap((color) => [`  --color-${color.name}: var(--${color.name});`, `  --color-${color.name}-foreground: var(--${color.name}-foreground);`]),
+    "}",
+    BLOCK_END,
+  ].join("\n");
+}
+
 /** Replaces Bloom's block in globals.css, or removes it when `block` is null. */
 export function withDirectionCss(css: string, block: string | null) {
   const stripped = css.replace(BLOCK_PATTERN, "\n").replace(/\s+$/, "");

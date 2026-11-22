@@ -193,7 +193,8 @@ test("a preset picked in the theme panel replaces the direction's colors and fon
   assert.ok(doc.includes(direction.concept));
   assert.match(doc, /`bg-background text-foreground` \| #FAFAF9 \/ #1C1917/);
   assert.match(doc, /changed in the theme panel/);
-  assert.doesNotMatch(doc, /bg-signal/);
+  // Pages already use the named colors, so they stay documented (and defined in CSS).
+  assert.match(doc, /`bg-signal text-signal-foreground`, `text-signal`, `border-signal` \| #FF5A36 \/ #10231C/);
   assert.doesNotMatch(doc, /Fraunces/);
   assert.match(doc, /Base radius: 10px/);
 });

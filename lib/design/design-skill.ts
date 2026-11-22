@@ -72,10 +72,9 @@ function colorRows(theme: ResolvedPreset, direction: DesignDirection | null) {
     `| Focus ring | \`ring-ring\` | ${vars.ring ?? vars.primary} |`,
     `| Data visualization only | \`chart-1\` … \`chart-5\` | ${theme.resolved.chart.join(" / ")} |`,
   ];
-  if (direction?.overlay) {
-    for (const color of direction.color.extra) {
-      rows.push(`| ${color.use.replace(/\|/g, "/")} | \`bg-${color.name} text-${color.name}-foreground\`, \`text-${color.name}\`, \`border-${color.name}\` | ${vars[color.name]} / ${vars[`${color.name}-foreground`]} |`);
-    }
+  // Named colors stay defined even after a preset replaces the direction's semantic tokens.
+  for (const color of direction?.color.extra ?? []) {
+    rows.push(`| ${color.use.replace(/\|/g, "/")} | \`bg-${color.name} text-${color.name}-foreground\`, \`text-${color.name}\`, \`border-${color.name}\` | ${color.value.toUpperCase()} / ${color.on.toUpperCase()} |`);
   }
   return rows.join("\n");
 }
@@ -178,7 +177,7 @@ This is the design contract for this project. Read it before changing any UI. ${
 ${direction ? directionSections(direction) : ""}
 ## Color
 
-${direction ? `${direction.color.strategy}${customized ? "" : "\n\nThe colors were changed in the theme panel after this direction was written; the table below is what the page uses now."}\n\n` : ""}Every color in the page is one of these tokens, with opacity modifiers where needed (\`bg-primary/10\`). In CSS they are \`var(--background)\`, \`var(--primary)\` and so on. The page is designed for ${effective.input.mode} mode.
+${direction ? `${direction.color.strategy}${customized ? "" : "\n\nThe semantic colors were changed in the theme panel after this direction was written; the table below is what the page uses now. The direction's named colors are unchanged."}\n\n` : ""}Every color in the page is one of these tokens, with opacity modifiers where needed (\`bg-primary/10\`). In CSS they are \`var(--background)\`, \`var(--primary)\` and so on. The page is designed for ${effective.input.mode} mode.
 
 | Role | Classes | Value (surface / text) |
 | --- | --- | --- |

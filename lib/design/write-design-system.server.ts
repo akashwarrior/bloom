@@ -7,6 +7,7 @@ import {
   BLOOM_FONTS_PATH,
   directionCss,
   fontsModule,
+  namedColorsCss,
   resolveFonts,
   storedDirectionSchema,
   withDirectionCss,
@@ -108,7 +109,8 @@ export function directionOverlayChanges(
   };
 
   if (!direction?.overlay) {
-    if (css !== null) put(GLOBALS_PATH, css, withDirectionCss(css, null));
+    // The page still uses the direction's named colors, so they outlive the overlay.
+    if (css !== null) put(GLOBALS_PATH, css, withDirectionCss(css, direction ? namedColorsCss(direction) : null));
     if (layout !== null) put(LAYOUT_PATH, layout, withDirectionLayout(layout, null) ?? layout);
     if (hasFontsModule) changes.push({ type: "delete", path: BLOOM_FONTS_PATH });
     return { changes, warnings };
