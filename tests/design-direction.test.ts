@@ -18,6 +18,7 @@ import {
   withDirectionLayout,
   type FontCatalog,
 } from "../lib/design/direction.ts";
+import { lintSourceChange } from "../lib/design/lint.ts";
 import type { ResolvedPreset } from "../lib/design/shadcn-theme.ts";
 import { directionInput } from "./fixtures/direction.ts";
 
@@ -81,8 +82,14 @@ test("illegible color pairs and mode mismatches are reported as facts to fix", (
     { name: "primary", value: "#FF5A36", on: "#10231C", use: "Collides with a semantic token." },
     { name: "ember", value: "#FF5A36", on: "#FFFFFF", use: "White text on a bright color." },
   ];
+  clash.extra.push({ name: "rose-500", value: "#FF5A36", on: "#10231C", use: "Would generate Tailwind's own palette class." });
   const named = colorProblems(clash);
   assert.ok(named.some((problem) => /"primary" collides/.test(problem)));
+  assert.ok(named.some((problem) => /"rose-500" collides/.test(problem)));
+  // Every accepted name must produce classes the page lint allows.
+  const accepted = { ...directionInput.color, extra: [{ name: "rose-gold", value: "#FF5A36", on: "#10231C", use: "A name that only resembles a palette name." }] };
+  assert.deepEqual(colorProblems(accepted), []);
+  assert.deepEqual(lintSourceChange({ path: "app/page.tsx", before: null, after: '<p className="bg-rose-gold text-rose-gold-foreground border-signal">', reference: null }), []);
   assert.ok(named.some((problem) => /extra "ember": text #FFFFFF on #FF5A36/.test(problem)));
 });
 

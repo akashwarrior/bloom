@@ -181,7 +181,13 @@ export function colorProblems(color: DesignDirectionInput["color"]) {
   }
   const seen = new Set<string>();
   for (const extra of color.extra) {
-    if (RESERVED_COLOR_NAMES.has(extra.name) || extra.name.endsWith("-foreground") || /^(?:chart|sidebar)-/.test(extra.name)) {
+    if (
+      RESERVED_COLOR_NAMES.has(extra.name) ||
+      extra.name.endsWith("-foreground") ||
+      /^(?:chart|sidebar)-/.test(extra.name) ||
+      // "rose-500" would generate classes identical to Tailwind's palette, which the page lint rejects.
+      RESERVED_COLOR_NAMES.has(extra.name.replace(/-(?:50|[1-9]00|950)$/, ""))
+    ) {
       problems.push(`extra color name "${extra.name}" collides with an existing token or palette name. Give it a name of its own.`);
     }
     if (seen.has(extra.name)) problems.push(`extra color name "${extra.name}" is used twice.`);
