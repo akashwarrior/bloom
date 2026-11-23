@@ -1,0 +1,59 @@
+{
+  "slug": "refactor-bakery",
+  "title": "Custom prompt",
+  "prompt": "A landing page for a neighbourhood bakery that takes pre-orders for weekend bread",
+  "projectId": "cmwtdr8tr0000utm6xtcths0y",
+  "previewUrl": "http://bloom-preview.localhost:32773",
+  "worker": "a",
+  "container": "bloom-bench-mwtdork0-febc3b-a",
+  "finishedAt": "2026-11-23T14:57:23.345Z",
+  "generation": {
+    "characters": 186401,
+    "durationMs": 556223,
+    "persistWaitSeconds": 0
+  },
+  "screenshots": {
+    "desktop": {
+      "title": "The Weekend Bake — Neighbourhood bakery pre-orders",
+      "description": "Small-batch weekend bread. Order by Friday 6pm, collect Sat–Sun at 14 Market Lane.",
+      "lang": "en",
+      "h1": [
+        "THE WEEKEND BAKEAlmost gone for this weekend"
+      ],
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 3576,
+      "overflow": false,
+      "sections": 5,
+      "links": 10,
+      "images": {
+        "total": 21,
+        "loaded": 21,
+        "failed": 0,
+        "lazy": 11
+      },
+      "errors": []
+    },
+    "mobile": {
+      "title": "The Weekend Bake — Neighbourhood bakery pre-orders",
+      "description": "Small-batch weekend bread. Order by Friday 6pm, collect Sat–Sun at 14 Market Lane.",
+      "lang": "en",
+      "h1": [
+        "THE WEEKEND BAKEAlmost gone for this weekend"
+      ],
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 7140,
+      "overflow": false,
+      "sections": 5,
+      "links": 10,
+      "images": {
+        "total": 21,
+        "loaded": 21,
+        "failed": 0,
+        "lazy": 11
+      },
+      "errors": []
+    }
+  }
+}
