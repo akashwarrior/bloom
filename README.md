@@ -8,7 +8,7 @@ Run PostgreSQL, Redis, and an S3-compatible service such as MinIO. Create the st
 
 Set these values in `.env.local` or in the server environment.
 
-| Variables                                                 | Purpose                                                      |
+| Variable                                                  | Purpose                                                      |
 | --------------------------------------------------------- | ------------------------------------------------------------ |
 | `DATABASE_URL`                                            | PostgreSQL connection string                                 |
 | `REDIS_URL`                                               | Redis connection string for chat streams                     |
@@ -57,13 +57,11 @@ Sandboxes serve previews on Vercel-issued URLs. Each session lasts 20 minutes by
 
 ## Benchmarks
 
-`benchmark/bench.mjs` runs real builds against an isolated copy of the app and saves desktop and mobile captures, metrics and the generated `DESIGN.md` under `benchmark-results/`. See `benchmark/README.md` for options.
+`benchmark/bench.mjs` builds a fixed set of prompts end to end against an isolated copy of the app and records desktop and mobile captures, metrics and the generated design. The latest run built all eight prompts plus one extra, each passing Bloom's review with every image loaded, no console errors and no mobile overflow, in 6 to 17 minutes per build.
 
-Latest run, `benchmark-results/09-refactor-bakery/`:
+![First screens of the eight benchmark builds](benchmark-results/bloom/overview.webp)
 
-| Prompt                                                                            | Time   | Result                                                                        |
-| --------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------- |
-| A landing page for a neighbourhood bakery that takes pre-orders for weekend bread | 9m 16s | Verified build; 21 of 21 images loaded, no console errors, no mobile overflow |
+Results are in [`benchmark-results/`](benchmark-results/README.md), and [`benchmark/README.md`](benchmark/README.md) explains how to run the benchmark and the blind comparison with Lovable and v0.
 
 ## Release checks
 

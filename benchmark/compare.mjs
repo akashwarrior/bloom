@@ -16,6 +16,7 @@ import { PROMPTS } from "./prompts.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = path.resolve(process.env.COMPARE_DIR ?? path.join(ROOT, "benchmark-results", "compare"));
+const BLOOM = path.resolve(process.env.COMPARE_BLOOM_DIR ?? path.join(ROOT, "benchmark-results", "bloom"));
 const REVIEW = path.join(DIR, "review");
 const SCORES = path.join(DIR, "scores");
 const PROVIDERS = ["bloom", "lovable", "v0"];
@@ -32,6 +33,7 @@ const BOT_CHECK = /just a moment|security verification|attention required|verify
 
 const slugOf = (index) => `${String(index + 1).padStart(2, "0")}-${PROMPTS[index].slug}`;
 const exists = (file) => fs.access(file).then(() => true, () => false);
+const resultsOf = (provider) => (provider === "bloom" ? BLOOM : path.join(DIR, provider));
 const readJson = async (file) => JSON.parse(await fs.readFile(file, "utf8"));
 const log = (message) => console.log(`[compare] ${message}`);
 
@@ -54,7 +56,7 @@ Run each prompt once in Lovable and once in v0, exactly as written, in a new pro
 - Paste the prompt as the first and only message. Do not attach images, pick templates or send follow-ups.
 - Wait until the first generation finishes, then publish it (Lovable: Publish; v0: Deploy) and copy the public site URL, not the chat URL.
 - Paste each URL into \`benchmark-results/compare/urls.json\` under the provider and prompt key.
-- Bloom was given the same text through \`benchmark/bench.mjs\`, also as a single message.
+- Bloom was given the same text through \`benchmark/bench.mjs\`, also as a single message. Its results are in \`benchmark-results/bloom/\`.
 - If a site blocks automated capture, save full-page screenshots yourself as \`desktop.png\` (1440 px wide) and \`mobile.png\` (390 px wide) in \`benchmark-results/compare/<provider>/<prompt key>/\`.
 
 ${prompts}
@@ -75,7 +77,7 @@ async function captureAll() {
     for (const provider of EXTERNAL) {
       for (const [slug, url] of Object.entries(urls[provider] ?? {})) {
         if (!url) continue;
-        const directory = path.join(DIR, provider, slug);
+        const directory = path.join(resultsOf(provider), slug);
         await fs.mkdir(directory, { recursive: true });
         log(`capture ${provider} ${slug}`);
         try {
@@ -98,6 +100,7 @@ async function captureAll() {
 
 async function review() {
   await fs.rm(REVIEW, { recursive: true, force: true });
+  await fs.mkdir(REVIEW, { recursive: true });
   await fs.mkdir(SCORES, { recursive: true });
   const key = {};
   const sections = [];
@@ -105,7 +108,7 @@ async function review() {
     const slug = slugOf(index);
     const available = [];
     for (const provider of PROVIDERS) {
-      if (await exists(path.join(DIR, provider, slug, "desktop.png"))) available.push(provider);
+      if (await exists(path.join(resultsOf(provider), slug, "desktop.png"))) available.push(provider);
     }
     if (available.length < 2) {
       log(`skip ${slug}: ${available.length} result(s)`);
@@ -122,7 +125,7 @@ async function review() {
       key[slug][label] = provider;
       await fs.mkdir(path.join(REVIEW, slug), { recursive: true });
       for (const view of ["desktop", "mobile"]) {
-        await fs.copyFile(path.join(DIR, provider, slug, `${view}.png`), path.join(REVIEW, slug, `${label}-${view}.png`));
+        await fs.copyFile(path.join(resultsOf(provider), slug, `${view}.png`), path.join(REVIEW, slug, `${label}-${view}.png`));
       }
       columns.push(`<figure><figcaption>${label}</figcaption><img src="${slug}/${label}-desktop.png" alt="Option ${label}, desktop"><img class="mobile" src="${slug}/${label}-mobile.png" alt="Option ${label}, mobile"></figure>`);
     }

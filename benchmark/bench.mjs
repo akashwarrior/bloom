@@ -15,7 +15,7 @@ import { PROMPTS } from "./prompts.mjs";
 const BENCH_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(BENCH_DIR, "..");
 const RUNS_DIR = path.join(BENCH_DIR, ".runs");
-const DEFAULT_OUT = path.join(ROOT, "benchmark-results");
+const DEFAULT_OUT = path.join(ROOT, "benchmark-results", "bloom");
 const requireFromRoot = createRequire(path.join(ROOT, "package.json"));
 const puppeteer = requireFromRoot("puppeteer-core");
 
@@ -745,7 +745,7 @@ Options:
   --workers=1        Number of isolated app copies/containers to run concurrently
   --force=true       Re-run prompts even when metrics.json exists
   --keep=true        Keep benchmark/.runs worker directories after exit
-  --out=<dir>        Results directory (default: benchmark-results)
+  --out=<dir>        Results directory (default: benchmark-results/bloom)
   --list             List prompt numbers and slugs
   --capture=<id>     Capture an existing project instead of generating
   --revision=<id>    Restore a project revision before capture

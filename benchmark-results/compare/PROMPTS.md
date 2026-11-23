@@ -5,7 +5,7 @@ Run each prompt once in Lovable and once in v0, exactly as written, in a new pro
 - Paste the prompt as the first and only message. Do not attach images, pick templates or send follow-ups.
 - Wait until the first generation finishes, then publish it (Lovable: Publish; v0: Deploy) and copy the public site URL, not the chat URL.
 - Paste each URL into `benchmark-results/compare/urls.json` under the provider and prompt key.
-- Bloom was given the same text through `benchmark/bench.mjs`, also as a single message.
+- Bloom was given the same text through `benchmark/bench.mjs`, also as a single message. Its results are in `benchmark-results/bloom/`.
 - If a site blocks automated capture, save full-page screenshots yourself as `desktop.png` (1440 px wide) and `mobile.png` (390 px wide) in `benchmark-results/compare/<provider>/<prompt key>/`.
 
 1. **Coffee roaster** (`01-coffee-roaster`)
