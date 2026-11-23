@@ -1,0 +1,59 @@
+{
+  "slug": "freelance-finance",
+  "title": "Freelance finance app",
+  "prompt": "a website for a personal finance app for freelancers",
+  "projectId": "cmwtlted30047jim6sm4th4pr",
+  "previewUrl": "http://bloom-preview.localhost:32777",
+  "worker": "b",
+  "container": "bloom-bench-mwtkcg0u-889d7b-b",
+  "finishedAt": "2026-11-23T18:49:09.056Z",
+  "generation": {
+    "characters": 399230,
+    "durationMs": 930032,
+    "persistWaitSeconds": 0
+  },
+  "screenshots": {
+    "desktop": {
+      "title": "Ledgr — From lumpy payouts to a steady paycheck",
+      "description": "Personal finance for freelancers. Smooth irregular income, auto-fill your tax jar, and see runway now.",
+      "lang": "en",
+      "h1": [
+        "From lumpy payouts to a steady paycheck"
+      ],
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 4617,
+      "overflow": false,
+      "sections": 6,
+      "links": 12,
+      "images": {
+        "total": 0,
+        "loaded": 0,
+        "failed": 0,
+        "lazy": 0
+      },
+      "errors": []
+    },
+    "mobile": {
+      "title": "Ledgr — From lumpy payouts to a steady paycheck",
+      "description": "Personal finance for freelancers. Smooth irregular income, auto-fill your tax jar, and see runway now.",
+      "lang": "en",
+      "h1": [
+        "From lumpy payouts to a steady paycheck"
+      ],
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 7943,
+      "overflow": false,
+      "sections": 6,
+      "links": 12,
+      "images": {
+        "total": 0,
+        "loaded": 0,
+        "failed": 0,
+        "lazy": 0
+      },
+      "errors": []
+    }
+  }
+}

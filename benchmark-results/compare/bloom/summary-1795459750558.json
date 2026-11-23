@@ -1,0 +1,474 @@
+[
+  {
+    "slug": "meeting-notes",
+    "title": "Meeting notes app",
+    "prompt": "a landing page for an AI meeting notes app that turns calls into searchable notes",
+    "projectId": "cmwtkcsq00000jim6miyit8hk",
+    "previewUrl": "http://bloom-preview.localhost:32777",
+    "worker": "b",
+    "container": "bloom-bench-mwtkcg0u-889d7b-b",
+    "finishedAt": "2026-11-23T17:59:01.845Z",
+    "generation": {
+      "characters": 190873,
+      "durationMs": 375024,
+      "persistWaitSeconds": 0
+    },
+    "screenshots": {
+      "desktop": {
+        "title": "Signal — From calls to searchable notes",
+        "description": "Turn calls into searchable notes. Find the decision, the quote, the next step without rewatching an hour.",
+        "lang": "en",
+        "h1": [
+          "From back-to-back calls to the exact moment you need"
+        ],
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 2956,
+        "overflow": false,
+        "sections": 5,
+        "links": 6,
+        "images": {
+          "total": 0,
+          "loaded": 0,
+          "failed": 0,
+          "lazy": 0
+        },
+        "errors": []
+      },
+      "mobile": {
+        "title": "Signal — From calls to searchable notes",
+        "description": "Turn calls into searchable notes. Find the decision, the quote, the next step without rewatching an hour.",
+        "lang": "en",
+        "h1": [
+          "From back-to-back calls to the exact moment you need"
+        ],
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 4283,
+        "overflow": false,
+        "sections": 5,
+        "links": 6,
+        "images": {
+          "total": 0,
+          "loaded": 0,
+          "failed": 0,
+          "lazy": 0
+        },
+        "errors": []
+      }
+    }
+  },
+  {
+    "slug": "coffee-roaster",
+    "title": "Coffee roaster",
+    "prompt": "a website for a small-batch coffee roaster in Portland, Oregon",
+    "projectId": "cmwtkcsop0000ghm64mgi7tl9",
+    "previewUrl": "http://bloom-preview.localhost:32776",
+    "worker": "a",
+    "container": "bloom-bench-mwtkcg0u-889d7b-a",
+    "finishedAt": "2026-11-23T18:05:36.120Z",
+    "generation": {
+      "characters": 302551,
+      "durationMs": 767765,
+      "persistWaitSeconds": 0
+    },
+    "screenshots": {
+      "desktop": {
+        "title": "Kinship Roasters — Small-Batch Coffee in Portland, OR",
+        "description": "Night-roasted single-origin lots in Portland. Shop Genji, Calima, Burica and Alta Montaña, or visit 1411 SE Morrison St.",
+        "lang": "en",
+        "h1": [
+          "Transformation by timed heatGreen to gold to brownFlavor coded in heat"
+        ],
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 4507,
+        "overflow": false,
+        "sections": 6,
+        "links": 13,
+        "images": {
+          "total": 4,
+          "loaded": 4,
+          "failed": 0,
+          "lazy": 3
+        },
+        "errors": []
+      },
+      "mobile": {
+        "title": "Kinship Roasters — Small-Batch Coffee in Portland, OR",
+        "description": "Night-roasted single-origin lots in Portland. Shop Genji, Calima, Burica and Alta Montaña, or visit 1411 SE Morrison St.",
+        "lang": "en",
+        "h1": [
+          "Transformation by timed heatGreen to gold to brownFlavor coded in heat"
+        ],
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 8605,
+        "overflow": false,
+        "sections": 6,
+        "links": 13,
+        "images": {
+          "total": 4,
+          "loaded": 4,
+          "failed": 0,
+          "lazy": 3
+        },
+        "errors": []
+      }
+    }
+  },
+  {
+    "slug": "furniture-studio",
+    "title": "Furniture studio",
+    "prompt": "a portfolio website for an independent furniture designer and maker",
+    "projectId": "cmwtkl4nv0010jim675rdwieq",
+    "previewUrl": "http://bloom-preview.localhost:32777",
+    "worker": "b",
+    "container": "bloom-bench-mwtkcg0u-889d7b-b",
+    "finishedAt": "2026-11-23T18:10:50.705Z",
+    "generation": {
+      "characters": 206989,
+      "durationMs": 693290,
+      "persistWaitSeconds": 0
+    },
+    "screenshots": {
+      "desktop": {
+        "title": "Tightjoin — Furniture drawn to the body",
+        "description": "Independent furniture designer and maker. Cut-list, process, timber board and commissions.",
+        "lang": "en",
+        "h1": [
+          "FURNITURE DRAWN, TO THE BODY"
+        ],
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 8926,
+        "overflow": false,
+        "sections": 6,
+        "links": 16,
+        "images": {
+          "total": 20,
+          "loaded": 20,
+          "failed": 0,
+          "lazy": 19
+        },
+        "errors": []
+      },
+      "mobile": {
+        "title": "Tightjoin — Furniture drawn to the body",
+        "description": "Independent furniture designer and maker. Cut-list, process, timber board and commissions.",
+        "lang": "en",
+        "h1": [
+          "FURNITURE DRAWN, TO THE BODY"
+        ],
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 13630,
+        "overflow": false,
+        "sections": 6,
+        "links": 16,
+        "images": {
+          "total": 20,
+          "loaded": 20,
+          "failed": 0,
+          "lazy": 19
+        },
+        "errors": []
+      }
+    }
+  },
+  {
+    "slug": "bike-coop",
+    "title": "Bike co-op",
+    "prompt": "a website for a community-run bicycle repair co-op in Minneapolis",
+    "projectId": "cmwtl0bmy001zjim6vlr2j18u",
+    "previewUrl": "http://bloom-preview.localhost:32777",
+    "worker": "b",
+    "container": "bloom-bench-mwtkcg0u-889d7b-b",
+    "finishedAt": "2026-11-23T18:21:46.208Z",
+    "generation": {
+      "characters": 245745,
+      "durationMs": 641137,
+      "persistWaitSeconds": 0
+    },
+    "screenshots": {
+      "desktop": {
+        "title": "The Stand — Community Bike Repair Co-op | Minneapolis",
+        "description": "Member-run DIY bike repair in Minneapolis. Shared stands and tools, volunteers who teach, sliding-scale prices. Walk in, fix it yourself, pay what you can.",
+        "lang": "en",
+        "h1": [
+          "You fix it.We teach it.We all own it."
+        ],
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 7693,
+        "overflow": false,
+        "sections": 8,
+        "links": 15,
+        "images": {
+          "total": 4,
+          "loaded": 4,
+          "failed": 0,
+          "lazy": 3
+        },
+        "errors": []
+      },
+      "mobile": {
+        "title": "The Stand — Community Bike Repair Co-op | Minneapolis",
+        "description": "Member-run DIY bike repair in Minneapolis. Shared stands and tools, volunteers who teach, sliding-scale prices. Walk in, fix it yourself, pay what you can.",
+        "lang": "en",
+        "h1": [
+          "You fix it.We teach it.We all own it."
+        ],
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 13442,
+        "overflow": false,
+        "sections": 8,
+        "links": 15,
+        "images": {
+          "total": 4,
+          "loaded": 4,
+          "failed": 0,
+          "lazy": 3
+        },
+        "errors": []
+      }
+    }
+  },
+  {
+    "slug": "patagonia-lodge",
+    "title": "Patagonia lodge",
+    "prompt": "a website for a boutique wilderness lodge in Patagonia, Chile",
+    "projectId": "cmwtktkwe0013ghm60ablyp2j",
+    "previewUrl": "http://bloom-preview.localhost:32776",
+    "worker": "a",
+    "container": "bloom-bench-mwtkcg0u-889d7b-a",
+    "finishedAt": "2026-11-23T18:22:32.515Z",
+    "generation": {
+      "characters": 361842,
+      "durationMs": 998587,
+      "persistWaitSeconds": 0
+    },
+    "screenshots": {
+      "desktop": {
+        "title": "Estancia 51S — A week at the end of the map",
+        "description": "Boutique wilderness lodge in Patagonia, Chile. Stone rooms, guided treks, condors and fjords.",
+        "lang": "en",
+        "h1": [
+          "A week at the end of the map"
+        ],
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 5445,
+        "overflow": false,
+        "sections": 7,
+        "links": 12,
+        "images": {
+          "total": 9,
+          "loaded": 9,
+          "failed": 0,
+          "lazy": 7
+        },
+        "errors": []
+      },
+      "mobile": {
+        "title": "Estancia 51S — A week at the end of the map",
+        "description": "Boutique wilderness lodge in Patagonia, Chile. Stone rooms, guided treks, condors and fjords.",
+        "lang": "en",
+        "h1": [
+          "A week at the end of the map"
+        ],
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 8904,
+        "overflow": false,
+        "sections": 7,
+        "links": 12,
+        "images": {
+          "total": 9,
+          "loaded": 9,
+          "failed": 0,
+          "lazy": 7
+        },
+        "errors": []
+      }
+    }
+  },
+  {
+    "slug": "kestrel-keyboard",
+    "title": "Kestrel keyboard",
+    "prompt": "a product page for a mechanical keyboard called the Kestrel 65",
+    "projectId": "cmwtledd90033jim6n1cgrcj1",
+    "previewUrl": "http://bloom-preview.localhost:32777",
+    "worker": "b",
+    "container": "bloom-bench-mwtkcg0u-889d7b-b",
+    "finishedAt": "2026-11-23T18:33:27.309Z",
+    "generation": {
+      "characters": 331396,
+      "durationMs": 689749,
+      "persistWaitSeconds": 0
+    },
+    "screenshots": {
+      "desktop": {
+        "title": "Kestrel 65 — 65% Mechanical Keyboard",
+        "description": "980g machined keyboard. 4.0mm travel, gasket brass plate, three switches. $169.",
+        "lang": "en",
+        "h1": [
+          "Kestrel 65"
+        ],
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 3382,
+        "overflow": false,
+        "sections": 9,
+        "links": 12,
+        "images": {
+          "total": 5,
+          "loaded": 5,
+          "failed": 0,
+          "lazy": 0
+        },
+        "errors": []
+      },
+      "mobile": {
+        "title": "Kestrel 65 — 65% Mechanical Keyboard",
+        "description": "980g machined keyboard. 4.0mm travel, gasket brass plate, three switches. $169.",
+        "lang": "en",
+        "h1": [
+          "Kestrel 65"
+        ],
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 6002,
+        "overflow": false,
+        "sections": 9,
+        "links": 12,
+        "images": {
+          "total": 5,
+          "loaded": 5,
+          "failed": 0,
+          "lazy": 0
+        },
+        "errors": []
+      }
+    }
+  },
+  {
+    "slug": "lisbon-film",
+    "title": "Lisbon film festival",
+    "prompt": "a website for an independent film festival in Lisbon",
+    "projectId": "cmwtlfd46002cghm66psgnadq",
+    "previewUrl": "http://bloom-preview.localhost:32776",
+    "worker": "a",
+    "container": "bloom-bench-mwtkcg0u-889d7b-a",
+    "finishedAt": "2026-11-23T18:34:22.307Z",
+    "generation": {
+      "characters": 193550,
+      "durationMs": 687681,
+      "persistWaitSeconds": 0
+    },
+    "screenshots": {
+      "desktop": {
+        "title": "Festa do Filme Independente — Lisboa | 24–29 Setembro",
+        "description": "Six nights of independent film across Alfama courtyards, a 1930s palace and open-air miradouros.",
+        "lang": "en",
+        "h1": [
+          "Lisboa. Film. Nights. City as cinema."
+        ],
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 4391,
+        "overflow": false,
+        "sections": 5,
+        "links": 16,
+        "images": {
+          "total": 6,
+          "loaded": 6,
+          "failed": 0,
+          "lazy": 2
+        },
+        "errors": []
+      },
+      "mobile": {
+        "title": "Festa do Filme Independente — Lisboa | 24–29 Setembro",
+        "description": "Six nights of independent film across Alfama courtyards, a 1930s palace and open-air miradouros.",
+        "lang": "en",
+        "h1": [
+          "Lisboa. Film. Nights. City as cinema."
+        ],
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 7664,
+        "overflow": false,
+        "sections": 5,
+        "links": 16,
+        "images": {
+          "total": 6,
+          "loaded": 5,
+          "failed": 0,
+          "lazy": 2
+        },
+        "errors": []
+      }
+    }
+  },
+  {
+    "slug": "freelance-finance",
+    "title": "Freelance finance app",
+    "prompt": "a website for a personal finance app for freelancers",
+    "projectId": "cmwtlted30047jim6sm4th4pr",
+    "previewUrl": "http://bloom-preview.localhost:32777",
+    "worker": "b",
+    "container": "bloom-bench-mwtkcg0u-889d7b-b",
+    "finishedAt": "2026-11-23T18:49:09.056Z",
+    "generation": {
+      "characters": 399230,
+      "durationMs": 930032,
+      "persistWaitSeconds": 0
+    },
+    "screenshots": {
+      "desktop": {
+        "title": "Ledgr — From lumpy payouts to a steady paycheck",
+        "description": "Personal finance for freelancers. Smooth irregular income, auto-fill your tax jar, and see runway now.",
+        "lang": "en",
+        "h1": [
+          "From lumpy payouts to a steady paycheck"
+        ],
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 4617,
+        "overflow": false,
+        "sections": 6,
+        "links": 12,
+        "images": {
+          "total": 0,
+          "loaded": 0,
+          "failed": 0,
+          "lazy": 0
+        },
+        "errors": []
+      },
+      "mobile": {
+        "title": "Ledgr — From lumpy payouts to a steady paycheck",
+        "description": "Personal finance for freelancers. Smooth irregular income, auto-fill your tax jar, and see runway now.",
+        "lang": "en",
+        "h1": [
+          "From lumpy payouts to a steady paycheck"
+        ],
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 7943,
+        "overflow": false,
+        "sections": 6,
+        "links": 12,
+        "images": {
+          "total": 0,
+          "loaded": 0,
+          "failed": 0,
+          "lazy": 0
+        },
+        "errors": []
+      }
+    }
+  }
+]

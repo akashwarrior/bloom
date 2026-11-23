@@ -1,0 +1,59 @@
+{
+  "slug": "lisbon-film",
+  "title": "Lisbon film festival",
+  "prompt": "a website for an independent film festival in Lisbon",
+  "projectId": "cmwtlfd46002cghm66psgnadq",
+  "previewUrl": "http://bloom-preview.localhost:32776",
+  "worker": "a",
+  "container": "bloom-bench-mwtkcg0u-889d7b-a",
+  "finishedAt": "2026-11-23T18:34:22.307Z",
+  "generation": {
+    "characters": 193550,
+    "durationMs": 687681,
+    "persistWaitSeconds": 0
+  },
+  "screenshots": {
+    "desktop": {
+      "title": "Festa do Filme Independente — Lisboa | 24–29 Setembro",
+      "description": "Six nights of independent film across Alfama courtyards, a 1930s palace and open-air miradouros.",
+      "lang": "en",
+      "h1": [
+        "Lisboa. Film. Nights. City as cinema."
+      ],
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 4391,
+      "overflow": false,
+      "sections": 5,
+      "links": 16,
+      "images": {
+        "total": 6,
+        "loaded": 6,
+        "failed": 0,
+        "lazy": 2
+      },
+      "errors": []
+    },
+    "mobile": {
+      "title": "Festa do Filme Independente — Lisboa | 24–29 Setembro",
+      "description": "Six nights of independent film across Alfama courtyards, a 1930s palace and open-air miradouros.",
+      "lang": "en",
+      "h1": [
+        "Lisboa. Film. Nights. City as cinema."
+      ],
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 7664,
+      "overflow": false,
+      "sections": 5,
+      "links": 16,
+      "images": {
+        "total": 6,
+        "loaded": 5,
+        "failed": 0,
+        "lazy": 2
+      },
+      "errors": []
+    }
+  }
+}

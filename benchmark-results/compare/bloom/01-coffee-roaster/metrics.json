@@ -1,0 +1,59 @@
+{
+  "slug": "coffee-roaster",
+  "title": "Coffee roaster",
+  "prompt": "a website for a small-batch coffee roaster in Portland, Oregon",
+  "projectId": "cmwtkcsop0000ghm64mgi7tl9",
+  "previewUrl": "http://bloom-preview.localhost:32776",
+  "worker": "a",
+  "container": "bloom-bench-mwtkcg0u-889d7b-a",
+  "finishedAt": "2026-11-23T18:05:36.120Z",
+  "generation": {
+    "characters": 302551,
+    "durationMs": 767765,
+    "persistWaitSeconds": 0
+  },
+  "screenshots": {
+    "desktop": {
+      "title": "Kinship Roasters — Small-Batch Coffee in Portland, OR",
+      "description": "Night-roasted single-origin lots in Portland. Shop Genji, Calima, Burica and Alta Montaña, or visit 1411 SE Morrison St.",
+      "lang": "en",
+      "h1": [
+        "Transformation by timed heatGreen to gold to brownFlavor coded in heat"
+      ],
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 4507,
+      "overflow": false,
+      "sections": 6,
+      "links": 13,
+      "images": {
+        "total": 4,
+        "loaded": 4,
+        "failed": 0,
+        "lazy": 3
+      },
+      "errors": []
+    },
+    "mobile": {
+      "title": "Kinship Roasters — Small-Batch Coffee in Portland, OR",
+      "description": "Night-roasted single-origin lots in Portland. Shop Genji, Calima, Burica and Alta Montaña, or visit 1411 SE Morrison St.",
+      "lang": "en",
+      "h1": [
+        "Transformation by timed heatGreen to gold to brownFlavor coded in heat"
+      ],
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 8605,
+      "overflow": false,
+      "sections": 6,
+      "links": 13,
+      "images": {
+        "total": 4,
+        "loaded": 4,
+        "failed": 0,
+        "lazy": 3
+      },
+      "errors": []
+    }
+  }
+}

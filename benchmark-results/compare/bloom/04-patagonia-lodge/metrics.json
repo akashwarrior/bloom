@@ -1,0 +1,59 @@
+{
+  "slug": "patagonia-lodge",
+  "title": "Patagonia lodge",
+  "prompt": "a website for a boutique wilderness lodge in Patagonia, Chile",
+  "projectId": "cmwtktkwe0013ghm60ablyp2j",
+  "previewUrl": "http://bloom-preview.localhost:32776",
+  "worker": "a",
+  "container": "bloom-bench-mwtkcg0u-889d7b-a",
+  "finishedAt": "2026-11-23T18:22:32.515Z",
+  "generation": {
+    "characters": 361842,
+    "durationMs": 998587,
+    "persistWaitSeconds": 0
+  },
+  "screenshots": {
+    "desktop": {
+      "title": "Estancia 51S — A week at the end of the map",
+      "description": "Boutique wilderness lodge in Patagonia, Chile. Stone rooms, guided treks, condors and fjords.",
+      "lang": "en",
+      "h1": [
+        "A week at the end of the map"
+      ],
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 5445,
+      "overflow": false,
+      "sections": 7,
+      "links": 12,
+      "images": {
+        "total": 9,
+        "loaded": 9,
+        "failed": 0,
+        "lazy": 7
+      },
+      "errors": []
+    },
+    "mobile": {
+      "title": "Estancia 51S — A week at the end of the map",
+      "description": "Boutique wilderness lodge in Patagonia, Chile. Stone rooms, guided treks, condors and fjords.",
+      "lang": "en",
+      "h1": [
+        "A week at the end of the map"
+      ],
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 8904,
+      "overflow": false,
+      "sections": 7,
+      "links": 12,
+      "images": {
+        "total": 9,
+        "loaded": 9,
+        "failed": 0,
+        "lazy": 7
+      },
+      "errors": []
+    }
+  }
+}

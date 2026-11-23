@@ -1,0 +1,59 @@
+{
+  "slug": "furniture-studio",
+  "title": "Furniture studio",
+  "prompt": "a portfolio website for an independent furniture designer and maker",
+  "projectId": "cmwtkl4nv0010jim675rdwieq",
+  "previewUrl": "http://bloom-preview.localhost:32777",
+  "worker": "b",
+  "container": "bloom-bench-mwtkcg0u-889d7b-b",
+  "finishedAt": "2026-11-23T18:10:50.705Z",
+  "generation": {
+    "characters": 206989,
+    "durationMs": 693290,
+    "persistWaitSeconds": 0
+  },
+  "screenshots": {
+    "desktop": {
+      "title": "Tightjoin — Furniture drawn to the body",
+      "description": "Independent furniture designer and maker. Cut-list, process, timber board and commissions.",
+      "lang": "en",
+      "h1": [
+        "FURNITURE DRAWN, TO THE BODY"
+      ],
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 8926,
+      "overflow": false,
+      "sections": 6,
+      "links": 16,
+      "images": {
+        "total": 20,
+        "loaded": 20,
+        "failed": 0,
+        "lazy": 19
+      },
+      "errors": []
+    },
+    "mobile": {
+      "title": "Tightjoin — Furniture drawn to the body",
+      "description": "Independent furniture designer and maker. Cut-list, process, timber board and commissions.",
+      "lang": "en",
+      "h1": [
+        "FURNITURE DRAWN, TO THE BODY"
+      ],
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 13630,
+      "overflow": false,
+      "sections": 6,
+      "links": 16,
+      "images": {
+        "total": 20,
+        "loaded": 20,
+        "failed": 0,
+        "lazy": 19
+      },
+      "errors": []
+    }
+  }
+}

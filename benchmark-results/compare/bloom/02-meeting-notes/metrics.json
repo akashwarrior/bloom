@@ -1,0 +1,59 @@
+{
+  "slug": "meeting-notes",
+  "title": "Meeting notes app",
+  "prompt": "a landing page for an AI meeting notes app that turns calls into searchable notes",
+  "projectId": "cmwtkcsq00000jim6miyit8hk",
+  "previewUrl": "http://bloom-preview.localhost:32777",
+  "worker": "b",
+  "container": "bloom-bench-mwtkcg0u-889d7b-b",
+  "finishedAt": "2026-11-23T17:59:01.845Z",
+  "generation": {
+    "characters": 190873,
+    "durationMs": 375024,
+    "persistWaitSeconds": 0
+  },
+  "screenshots": {
+    "desktop": {
+      "title": "Signal — From calls to searchable notes",
+      "description": "Turn calls into searchable notes. Find the decision, the quote, the next step without rewatching an hour.",
+      "lang": "en",
+      "h1": [
+        "From back-to-back calls to the exact moment you need"
+      ],
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 2956,
+      "overflow": false,
+      "sections": 5,
+      "links": 6,
+      "images": {
+        "total": 0,
+        "loaded": 0,
+        "failed": 0,
+        "lazy": 0
+      },
+      "errors": []
+    },
+    "mobile": {
+      "title": "Signal — From calls to searchable notes",
+      "description": "Turn calls into searchable notes. Find the decision, the quote, the next step without rewatching an hour.",
+      "lang": "en",
+      "h1": [
+        "From back-to-back calls to the exact moment you need"
+      ],
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 4283,
+      "overflow": false,
+      "sections": 5,
+      "links": 6,
+      "images": {
+        "total": 0,
+        "loaded": 0,
+        "failed": 0,
+        "lazy": 0
+      },
+      "errors": []
+    }
+  }
+}

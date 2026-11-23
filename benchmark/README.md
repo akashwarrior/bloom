@@ -125,6 +125,31 @@ title/description metadata.
 runs only write measurements and screenshots; review them manually or with
 `contact-sheet.png`.
 
+## Comparing with other builders
+
+`compare.mjs` runs a blind comparison of Bloom against Lovable and v0 on the same eight prompts (`prompts.mjs`). Every result is captured by the same code (`capture.mjs`) at the same sizes.
+
+```bash
+# 1. Bloom: generate all eight prompts
+node benchmark/bench.mjs --workers=2 --out=benchmark-results/compare/bloom
+
+# 2. Write benchmark-results/compare/PROMPTS.md and an empty urls.json
+node benchmark/compare.mjs init
+#    Run each prompt in Lovable and v0 as described in PROMPTS.md, publish, and paste the URLs into urls.json
+
+# 3. Capture the published sites
+node benchmark/compare.mjs capture
+
+# 4. Shuffle the results into anonymous options A/B/C per prompt
+node benchmark/compare.mjs review
+#    Reviewers open review/index.html, fill a copy of review/scores-template.csv and save it as scores/<name>.csv
+
+# 5. Unblind the scores into RESULTS.md
+node benchmark/compare.mjs tally
+```
+
+Each option is scored 1 to 5 on originality, polish, mobile, truthfulness (no invented prices, reviews, stats or addresses) and usefulness, and ranked within its prompt. `review/key.json` maps the letters back to tools; reviewers should not open it before scoring. Sites that answer with a bot check are skipped with a message; save their screenshots by hand in the folder it names.
+
 ## Notes
 
 - Runs make real model calls and can take a long time. A single prompt commonly

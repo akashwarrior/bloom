@@ -1,0 +1,59 @@
+{
+  "slug": "bike-coop",
+  "title": "Bike co-op",
+  "prompt": "a website for a community-run bicycle repair co-op in Minneapolis",
+  "projectId": "cmwtl0bmy001zjim6vlr2j18u",
+  "previewUrl": "http://bloom-preview.localhost:32777",
+  "worker": "b",
+  "container": "bloom-bench-mwtkcg0u-889d7b-b",
+  "finishedAt": "2026-11-23T18:21:46.208Z",
+  "generation": {
+    "characters": 245745,
+    "durationMs": 641137,
+    "persistWaitSeconds": 0
+  },
+  "screenshots": {
+    "desktop": {
+      "title": "The Stand — Community Bike Repair Co-op | Minneapolis",
+      "description": "Member-run DIY bike repair in Minneapolis. Shared stands and tools, volunteers who teach, sliding-scale prices. Walk in, fix it yourself, pay what you can.",
+      "lang": "en",
+      "h1": [
+        "You fix it.We teach it.We all own it."
+      ],
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 7693,
+      "overflow": false,
+      "sections": 8,
+      "links": 15,
+      "images": {
+        "total": 4,
+        "loaded": 4,
+        "failed": 0,
+        "lazy": 3
+      },
+      "errors": []
+    },
+    "mobile": {
+      "title": "The Stand — Community Bike Repair Co-op | Minneapolis",
+      "description": "Member-run DIY bike repair in Minneapolis. Shared stands and tools, volunteers who teach, sliding-scale prices. Walk in, fix it yourself, pay what you can.",
+      "lang": "en",
+      "h1": [
+        "You fix it.We teach it.We all own it."
+      ],
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 13442,
+      "overflow": false,
+      "sections": 8,
+      "links": 15,
+      "images": {
+        "total": 4,
+        "loaded": 4,
+        "failed": 0,
+        "lazy": 3
+      },
+      "errors": []
+    }
+  }
+}

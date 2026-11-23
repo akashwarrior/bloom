@@ -1,0 +1,59 @@
+{
+  "slug": "kestrel-keyboard",
+  "title": "Kestrel keyboard",
+  "prompt": "a product page for a mechanical keyboard called the Kestrel 65",
+  "projectId": "cmwtledd90033jim6n1cgrcj1",
+  "previewUrl": "http://bloom-preview.localhost:32777",
+  "worker": "b",
+  "container": "bloom-bench-mwtkcg0u-889d7b-b",
+  "finishedAt": "2026-11-23T18:33:27.309Z",
+  "generation": {
+    "characters": 331396,
+    "durationMs": 689749,
+    "persistWaitSeconds": 0
+  },
+  "screenshots": {
+    "desktop": {
+      "title": "Kestrel 65 — 65% Mechanical Keyboard",
+      "description": "980g machined keyboard. 4.0mm travel, gasket brass plate, three switches. $169.",
+      "lang": "en",
+      "h1": [
+        "Kestrel 65"
+      ],
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 3382,
+      "overflow": false,
+      "sections": 9,
+      "links": 12,
+      "images": {
+        "total": 5,
+        "loaded": 5,
+        "failed": 0,
+        "lazy": 0
+      },
+      "errors": []
+    },
+    "mobile": {
+      "title": "Kestrel 65 — 65% Mechanical Keyboard",
+      "description": "980g machined keyboard. 4.0mm travel, gasket brass plate, three switches. $169.",
+      "lang": "en",
+      "h1": [
+        "Kestrel 65"
+      ],
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 6002,
+      "overflow": false,
+      "sections": 9,
+      "links": 12,
+      "images": {
+        "total": 5,
+        "loaded": 5,
+        "failed": 0,
+        "lazy": 0
+      },
+      "errors": []
+    }
+  }
+}
